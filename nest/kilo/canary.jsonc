@@ -1,0 +1,38 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  // Tier-0 bird. Mirrors ../agents/canary.md's tools:
+  // Read, Grep, Glob, plus gitleaks and grype
+  // via the bash map below (Kilo enforces it; Claude Code frontmatter wouldn't).
+  // Model: DeepSeek V4 Flash 0731 — security triage (interpreting
+  // gitleaks/grype output) warrants more reliability than a pure-free pick;
+  // still near-$0 at $0.065/$0.18 per M tokens. Not free-tier by design.
+  // Picked from the live openrouter.ai/api/v1/models catalog, 2026-09-10.
+  "model": "openrouter/deepseek/deepseek-v4-flash-0731",
+  "provider": {
+    "openrouter": { "env": ["OPENROUTER_API_KEY_TIER0"] }
+  },
+  "instructions": ["../agents/canary.md"],
+  "permission": {
+    "read": "allow",
+    "glob": "allow",
+    "grep": "allow",
+    "lsp": "allow",
+    "todoread": "allow",
+    "edit": "deny",
+    "bash": { "*": "deny", "gitleaks*": "allow", "grype*": "allow" },
+    "external_directory": "deny",
+    "task": "deny",
+    "agent_manager": "deny",
+    "skill": "deny",
+    "todowrite": "deny",
+    "websearch": "deny",
+    "webfetch": "deny",
+    "doom_loop": "deny"
+  },
+  "sandbox": {
+    "enabled": true,
+    "network": "deny",
+    "allowed_hosts": [],
+    "writable_paths": []
+  }
+}

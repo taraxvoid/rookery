@@ -1,0 +1,124 @@
+name: Agent dispatch
+
+# Runs when `agent:ready` is added to an issue. Today it's a smoke test that
+# proves the path end to end: claim comment, Claude Code edits one file, the
+# workflow opens a draft PR.
+#
+# Built so issue text can't steer the agent:
+# - Runs only if the labeler has write access AND the issue's author is an
+#   owner, member or collaborator. Outsider-written issues never reach it.
+# - The prompt carries the issue number only. No title or body is
+#   interpolated, and the agent has no tool that can fetch them.
+# - The agent gets Read plus Edit on one file, in dontAsk mode: everything
+#   else is refused, Bash included. It has no git, gh or network tools.
+# - Side effects (comment, commit, push, PR) are fixed workflow steps, not
+#   agent actions, and run only after a check that the agent changed nothing
+#   but that file. Git credentials are added only after the agent exits.
+#
+# Needs an ANTHROPIC_API_KEY secret in the `agent-dispatch` environment
+# (limited to the default branch), so no other workflow can read it.
+
+on:
+  issues:
+    types: [labeled]
+
+permissions: {}
+
+concurrency:
+  group: agent-dispatch-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    if: >-
+      github.event.label.name == 'agent:ready' &&
+      !contains(github.event.issue.labels.*.name, 'agent:do-not-automate') &&
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      allowed: ${{ steps.check.outputs.allowed }}
+    steps:
+      - name: Labeler has write access
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SENDER: ${{ github.event.sender.login }}
+        run: |
+          permission=$(gh api "repos/$REPO/collaborators/$SENDER/permission" --jq .permission)
+          case "$permission" in
+            admin|maintain|write) echo "allowed=true" >> "$GITHUB_OUTPUT" ;;
+            *) echo "::notice::$SENDER has '$permission' access; not dispatching"; echo "allowed=false" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+  dispatch:
+    needs: gate
+    if: needs.gate.outputs.allowed == 'true'
+    runs-on: ubuntu-latest
+    environment: agent-dispatch
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ISSUE: ${{ github.event.issue.number }}
+      BRANCH: agent/smoke/${{ github.event.issue.number }}
+    steps:
+      - name: Claim
+        run: |
+          gh issue edit "$ISSUE" --repo "$GITHUB_REPOSITORY" --add-label agent:working --remove-label agent:ready
+          gh issue comment "$ISSUE" --repo "$GITHUB_REPOSITORY" --body "Dispatch smoke test claimed this, working in \`$BRANCH\`. No work is done on the issue's content."
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Agent edits one file
+        uses: anthropics/claude-code-action@cfc3eb22bfed5c26ef66e3223c982af27e4524de # v1.0.231
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # The job's own short-lived token, so the action doesn't need
+          # id-token: write for its default GitHub App path.
+          github_token: ${{ github.token }}
+          prompt: |
+            Trigger smoke test for issue-driven dispatch, issue number ${{ github.event.issue.number }}.
+            Append one line to the end of roost/LEARNED.md:
+            "- Dispatch smoke test ran for issue ${{ github.event.issue.number }}."
+            Change nothing else and stop.
+          claude_args: >-
+            --permission-mode dontAsk
+            --allowedTools "Read,Edit(./roost/LEARNED.md)"
+            --disallowedTools "Bash,WebFetch,WebSearch,Task,Write,NotebookEdit"
+            --max-turns 4
+
+      # The output is checked against exactly what was asked for, so nothing
+      # else the agent saw (including any token it could read) can ride out
+      # in the PR.
+      - name: Agent made exactly the expected change
+        run: |
+          changed=$(git status --porcelain)
+          if [ "$changed" != " M roost/LEARNED.md" ]; then
+            echo "::error::unexpected changes:"; echo "$changed"; exit 1
+          fi
+          expected="+- Dispatch smoke test ran for issue $ISSUE."
+          actual=$(git diff -U0 -- roost/LEARNED.md | grep -v '^+++' | grep -E '^[-+]' || true)
+          if [ "$actual" != "$expected" ] && [ "$actual" != "$(printf '+\n%s' "$expected")" ]; then
+            echo "::error::diff is not the expected one-line append"; exit 1
+          fi
+
+      - name: Open draft PR
+        run: |
+          gh auth setup-git
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$BRANCH"
+          git commit -am "chore(roost): dispatch smoke test for #$ISSUE"
+          git push -u origin "$BRANCH"
+          gh pr create --draft --head "$BRANCH" \
+            --title "[smoke test] agent:ready dispatch for #$ISSUE" \
+            --body "Refs #$ISSUE. Smoke test only; does not resolve the issue."
+          gh issue edit "$ISSUE" --repo "$GITHUB_REPOSITORY" --add-label agent:in-review --remove-label agent:working

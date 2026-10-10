@@ -1,0 +1,36 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  // Tier-0 bird. Mirrors ../agents/tern.md's tools:
+  // Read, Grep, Glob, WebFetch.
+  // Model: Qwen3.7 Flash (1M context, $0.03/$0.13 per M tokens) — a cheap
+  // usage/analytics digest, ongoing/lightweight per its own job description.
+  // Picked from the live openrouter.ai/api/v1/models catalog, 2026-09-10.
+  "model": "openrouter/qwen/qwen3.7-flash",
+  "provider": {
+    "openrouter": { "env": ["OPENROUTER_API_KEY_TIER0"] }
+  },
+  "instructions": ["../agents/tern.md"],
+  "permission": {
+    "read": "allow",
+    "glob": "allow",
+    "grep": "allow",
+    "lsp": "allow",
+    "todoread": "allow",
+    "edit": "deny",
+    "bash": "deny",
+    "external_directory": "deny",
+    "task": "deny",
+    "agent_manager": "deny",
+    "skill": "deny",
+    "todowrite": "deny",
+    "websearch": "deny",
+    "webfetch": "allow",
+    "doom_loop": "deny"
+  },
+  "sandbox": {
+    "enabled": true,
+    "network": "deny",
+    "allowed_hosts": [],
+    "writable_paths": []
+  }
+}

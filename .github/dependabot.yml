@@ -1,0 +1,16 @@
+# Security-only: version updates are handled by Renovate (renovate.json), so
+# open-pull-requests-limit is 0. Dependabot security updates ignore that limit
+# and still open PRs; this file only shapes them (commit prefix, label).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
+    cooldown:
+      default-days: 7
+    labels:
+      - security
+    commit-message:
+      prefix: "fix(deps)"

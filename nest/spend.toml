@@ -1,0 +1,42 @@
+# OpenRouter keys + guardrails as code. Reconciled by `uv run nest/spend.py`
+# (plan / apply / report / env / rotate) — see README.md "Spend".
+#
+# Each [keys.<id>] becomes one OpenRouter API key plus one guardrail of the
+# same name assigned to it. The guardrail's allowed_models is *derived*: every
+# nest/kilo/*.jsonc whose provider env is this key's `env`, plus
+# `extra_models` for anything dispatched by model override rather than its
+# own config (raven council members). So a bird can't be pointed at a model
+# its key will refuse — `plan` fails first.
+#
+# Dollar amounts are starting guesses, not measured. Outer bound is the
+# Mercury card on OpenRouter: keep its monthly cap at or above the sum of the
+# guardrail limit_usd values below, or the card declines before a guardrail
+# ever trips.
+
+[credits]
+warn_below_usd = 10  # `report` flags the balance under this
+
+# `spend.py publish` pushes an amount-free summary (ratios, flags, counts) to
+# voidlight for the taraxvoid.com status page. Secrets: keychain accounts
+# "voidlight-ingest" (shared HMAC key) and, optionally, "mercury" (read-only
+# API token; without it the card section publishes as null).
+[publish]
+url = "https://status.taraxvoid.com/ingest/spend"
+card_merchants = ["OpenRouter", "Cloudflare"]  # Mercury merchant-lock names
+
+[keys.tier0]
+name = "rookery-tier0"
+env = "OPENROUTER_API_KEY_TIER0"
+limit_usd = 0.50      # per-key hard stop...
+limit_reset = "daily" # ...resetting daily, so a runaway bird loses a day, not a month
+guardrail = { limit_usd = 5, reset_interval = "monthly" }
+extra_models = []
+
+[keys.tier1]
+name = "rookery-tier1"
+env = "OPENROUTER_API_KEY_TIER1"
+limit_usd = 5
+limit_reset = "daily"
+guardrail = { limit_usd = 40, reset_interval = "monthly" }
+# raven council members — skills/council/SKILL.md; jackdaw.jsonc carries the default
+extra_models = ["google/gemini-3.1-pro-preview", "deepseek/deepseek-v4-pro-0813"]

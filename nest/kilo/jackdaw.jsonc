@@ -1,0 +1,37 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  // Tier-0 bird. Mirrors ../agents/jackdaw.md's tools: Read, Grep, Glob.
+  // Model: OpenAI GPT-6.1 Sol — the council's default cross-family reviewer.
+  // The point is *not* Claude (crow/raven are), so a reasoning model from
+  // another family; paid, so it's on the TIER1 key, not TIER0's ~$0 cap.
+  // Raven councils swap in the other members listed in
+  // ../../skills/council/SKILL.md. Picked from the live
+  // openrouter.ai/api/v1/models catalog, 2026-10-06.
+  "model": "openrouter/openai/gpt-6.1-sol",
+  "provider": {
+    "openrouter": { "env": ["OPENROUTER_API_KEY_TIER1"] }
+  },
+  "instructions": ["../agents/jackdaw.md"],
+  "permission": {
+    "read": "allow",
+    "glob": "allow",
+    "grep": "allow",
+    "lsp": "allow",
+    "todoread": "allow",
+    "edit": "deny",
+    "bash": "deny",
+    "external_directory": "deny",
+    "task": "deny",
+    "agent_manager": "deny",
+    "skill": "deny",
+    "todowrite": "deny",
+    "websearch": "deny",
+    "webfetch": "deny",
+    "doom_loop": "deny"
+  },
+  "sandbox": {
+    "enabled": true,
+    "network": "deny",
+    "writable_paths": []
+  }
+}

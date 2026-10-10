@@ -1,0 +1,37 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  // Tier-0 bird. Mirrors ../agents/owl.md's tools:
+  // Read, Grep, Glob, WebFetch.
+  // Model: Nvidia Nemotron 3 Ultra 550B-A55B (free tier, 1M context) — an
+  // overnight log digest needs long context more than speed; free fits an
+  // unattended nightly job that can tolerate free-tier latency.
+  // Picked from the live openrouter.ai/api/v1/models catalog, 2026-09-10.
+  "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+  "provider": {
+    "openrouter": { "env": ["OPENROUTER_API_KEY_TIER0"] }
+  },
+  "instructions": ["../agents/owl.md"],
+  "permission": {
+    "read": "allow",
+    "glob": "allow",
+    "grep": "allow",
+    "lsp": "allow",
+    "todoread": "allow",
+    "edit": "deny",
+    "bash": "deny",
+    "external_directory": "deny",
+    "task": "deny",
+    "agent_manager": "deny",
+    "skill": "deny",
+    "todowrite": "deny",
+    "websearch": "deny",
+    "webfetch": "allow",
+    "doom_loop": "deny"
+  },
+  "sandbox": {
+    "enabled": true,
+    "network": "deny",
+    "allowed_hosts": [],
+    "writable_paths": []
+  }
+}

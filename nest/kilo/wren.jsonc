@@ -1,0 +1,36 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  // Tier-0 bird. Mirrors ../agents/wren.md's tools: Read, Grep, Glob.
+  // Model: local Ollama mistral — narrow, mechanical task (dead code/unused
+  // imports), fits the cheapest tier-0 slot and costs $0. Decided 2026-09-10.
+  "model": "ollama/mistral",
+  "provider": {
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "options": { "baseURL": "http://localhost:11434/v1" }
+    }
+  },
+  "instructions": ["../agents/wren.md"],
+  "permission": {
+    "read": "allow",
+    "glob": "allow",
+    "grep": "allow",
+    "lsp": "allow",
+    "todoread": "allow",
+    "edit": "deny",
+    "bash": "deny",
+    "external_directory": "deny",
+    "task": "deny",
+    "agent_manager": "deny",
+    "skill": "deny",
+    "todowrite": "deny",
+    "websearch": "deny",
+    "webfetch": "deny",
+    "doom_loop": "deny"
+  },
+  "sandbox": {
+    "enabled": true,
+    "network": "deny",
+    "writable_paths": []
+  }
+}

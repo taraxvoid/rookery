@@ -1,0 +1,34 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  // Tier-0 bird. Mirrors ../agents/shrike.md's tools: Read, Grep, Glob.
+  // Model: Cohere North Mini Code (free tier) — bug-hunting wants a
+  // code-specialized model over a generalist; free avoids tier-0 spend.
+  // Picked from the live openrouter.ai/api/v1/models catalog, 2026-09-10.
+  "model": "openrouter/cohere/north-mini-code:free",
+  "provider": {
+    "openrouter": { "env": ["OPENROUTER_API_KEY_TIER0"] }
+  },
+  "instructions": ["../agents/shrike.md"],
+  "permission": {
+    "read": "allow",
+    "glob": "allow",
+    "grep": "allow",
+    "lsp": "allow",
+    "todoread": "allow",
+    "edit": "deny",
+    "bash": "deny",
+    "external_directory": "deny",
+    "task": "deny",
+    "agent_manager": "deny",
+    "skill": "deny",
+    "todowrite": "deny",
+    "websearch": "deny",
+    "webfetch": "deny",
+    "doom_loop": "deny"
+  },
+  "sandbox": {
+    "enabled": true,
+    "network": "deny",
+    "writable_paths": []
+  }
+}
