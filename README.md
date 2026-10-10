@@ -123,26 +123,12 @@ what would leave the machine.
 
 ## Working with GitHub
 
-Work enters through labels and is tracked through labels.
-
-| Label | Meaning |
-|---|---|
-| `agent:ready` | A human decided this is scoped enough to hand off. Nothing is picked up without it. |
-| `agent:do-not-automate` | Explicit opt-out, checked first. |
-| `agent:working` | Claimed and in progress. |
-| `agent:needs-you` | Blocked on a human decision. |
-| `agent:in-review` | PR open, awaiting cross-review. |
-| `agent:ready-to-merge` | Reviewed, gates pass. |
-| `agent-authored` | Opened by an agent, whatever credentials it ran under. |
-
-The in-flight states match [Agent Orchestrator](https://github.com/OrchestratorInc/agent-orchestrator)'s
-board columns, so GitHub and the orchestrator never disagree about a task.
-
-- **Branches**: `agent/<bird>/<issue>-<slug>`, so provenance shows in every branch list.
-- **Claiming**: the agent comments with its name and branch and flips the label to
-  `agent:working`. With several tools acting on one repo, that comment is what
-  stops two of them taking the same issue.
-- **PRs**: the template asks how the change was verified and whether an agent wrote it.
+Work enters through labels and is tracked through labels: nothing is picked up
+without `agent:ready`, a claim comment plus `agent:working` stops two tools
+taking the same issue, and agent branches are `agent/<bird>/<issue>-<slug>`.
+[CONVENTIONS.md](CONVENTIONS.md) has the full label set, the bar an issue must
+clear to be `agent:ready`, and how agents escalate. Labels live in
+[`.github/labels.yml`](.github/labels.yml) and sync on merge.
 
 ### Dispatch workflow
 

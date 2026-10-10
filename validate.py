@@ -17,9 +17,15 @@ Checks:
   "scoped" entry is unrestricted Bash there. Scoped shell access for a tier-0
   bird comes only from its nest/kilo/*.jsonc permission.bash map, which Kilo
   enforces per pattern.
+- every read-only persona has a nest/kilo/<name>.jsonc: its tools: line can't
+  scope Bash, so without a Kilo config nothing enforces its limits beyond
+  Claude Code's coarse tool list
 - nest/claude/settings.json never allows git or gh wholesale, and keeps the
   deny rules that stop history rewrites, force pushes, pushes to main and
   hook bypasses. Settings-level rules are enforced, and subagents inherit them.
+- every repo-relative file path in a tracked *.md (in backticks or a markdown
+  link) resolves to a real file. Stale references survived two manual
+  cleanups; re-reading prose doesn't catch them, so it has to be mechanical.
 """
 
 import json
@@ -27,9 +33,13 @@ import re
 import sys
 from pathlib import Path
 
-AGENTS_DIR = Path(__file__).parent / "agents"
-KILO_DIR = Path(__file__).parent / "nest" / "kilo"
-CLAUDE_SETTINGS = Path(__file__).parent / "nest" / "claude" / "settings.json"
+ROOT = Path(__file__).parent
+AGENTS_DIR = ROOT / "agents"
+KILO_DIR = ROOT / "nest" / "kilo"
+CLAUDE_SETTINGS = ROOT / "nest" / "claude" / "settings.json"
+# Backtick spans and link targets that look like a path this repo owns.
+_REPO_TOP_LEVEL = ("agents/", "nest/", "roost/", "skills/", "tests/", ".github/", "../")
+_PATH_LIKE = re.compile(r"`([^`\s]+/[^`\s]+)`|\]\(([^)\s]+)\)")
 REQUIRED_FIELDS = ("name", "tier", "description", "model")
 DISALLOWED_FOR_READONLY = ("Edit", "Write", "NotebookEdit", "Task")
 DENY_FOR_READONLY_KILO = ("edit", "task", "agent_manager", "skill", "todowrite", "doom_loop")
@@ -186,6 +196,31 @@ def check_claude_settings(path: Path) -> list[str]:
     return errors
 
 
+def looks_like_repo_file(candidate: str) -> bool:
+    if "*" in candidate or "<" in candidate or "://" in candidate:
+        return False  # glob, <placeholder> or URL
+    if not candidate.startswith(_REPO_TOP_LEVEL):
+        return False
+    basename = candidate.split("#", 1)[0].rstrip("/").rsplit("/", 1)[-1]
+    return "." in basename  # names a file, not a directory
+
+
+def check_links(path: Path) -> list[str]:
+    errors = []
+    for match in _PATH_LIKE.finditer(path.read_text()):
+        candidate = match.group(1) or match.group(2)
+        if not looks_like_repo_file(candidate):
+            continue
+        # Docs at the root write paths from the root; nested docs write them
+        # relative to themselves. Accept either, as long as it stays in the repo.
+        bare = candidate.split("#", 1)[0]
+        targets = {(path.parent / bare).resolve(), (ROOT / bare).resolve()}
+        inside = [t for t in targets if t.is_relative_to(ROOT.resolve())]
+        if inside and not any(t.exists() for t in inside):
+            errors.append(f"{path.relative_to(ROOT)}: '{candidate}' doesn't resolve to a file")
+    return errors
+
+
 def main() -> int:
     all_errors = []
     readonly_by_name: dict[str, bool] = {}
@@ -206,8 +241,17 @@ def main() -> int:
     for path in kilo_paths:
         all_errors.extend(check_kilo_file(path, readonly_by_name.get(path.stem, False)))
 
+    kilo_names = {path.stem for path in kilo_paths}
+    for name, readonly in sorted(readonly_by_name.items()):
+        if readonly and name not in kilo_names:
+            all_errors.append(f"{name}.md: read-only persona has no nest/kilo/{name}.jsonc to enforce its limits")
+
     if CLAUDE_SETTINGS.exists():
         all_errors.extend(check_claude_settings(CLAUDE_SETTINGS))
+
+    md_paths = [p for p in sorted(ROOT.rglob("*.md")) if not {".git", ".venv", "node_modules"} & set(p.parts)]
+    for path in md_paths:
+        all_errors.extend(check_links(path))
 
     if all_errors:
         print("nest validation failed:\n")
@@ -218,6 +262,7 @@ def main() -> int:
     print(f"agents: {len(agent_paths)} personas OK")
     print(f"nest/kilo: {len(kilo_paths)} configs OK")
     print("nest/claude/settings.json: safe-git policy OK")
+    print(f"docs: file references in {len(md_paths)} markdown files OK")
     return 0
 
 
