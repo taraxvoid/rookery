@@ -53,7 +53,10 @@ Copilot under this plan.
 
 These still hold from the first assessment's corrections:
 - Issue text must not steer an agent.
-- gh-aw is in preview: pin the compiler version and commit the lock files.
+- gh-aw moves fast: pin the compiler version and commit the lock files. (It
+  went [GA on 2026-10-28](https://github.blog/changelog/2026-10-28-github-agentic-workflows-generally-available/);
+  the "preview" in the first assessment was out of date. voidchores pins
+  v1.0.1.)
 - taraxvoid/rookery and ravenflight/rookery have already drifted, so there
   should be one source of truth.
 
@@ -209,7 +212,7 @@ persona.
 
 ## Risks
 
-- **gh-aw is in preview, with frequent releases and some breaking.** Pin the
+- **gh-aw is newly GA (v1.x) and releases often.** Pin the
   compiler, keep lock files committed, and rely on the drift check.
 - **Copilot's model list decides council diversity.** If it can't offer a
   non-Claude family at a sane price, jackdaw needs another provider (an
