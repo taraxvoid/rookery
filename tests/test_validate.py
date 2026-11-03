@@ -47,6 +47,34 @@ class SafeGitPolicy(unittest.TestCase):
                 self.assertTrue(errors_for({"permissions": perms}))
 
 
+class DocLinks(unittest.TestCase):
+    def check(self, text: str) -> list[str]:
+        with tempfile.NamedTemporaryFile("w", suffix=".md", dir=validate.ROOT / "tests", delete=False) as f:
+            f.write(text)
+        path = Path(f.name)
+        try:
+            return validate.check_links(path)
+        finally:
+            path.unlink()
+
+    def test_broken_reference_fails(self):
+        self.assertTrue(self.check("see `nest/README.md` and [x](agents/nope.md)"))
+
+    def test_real_reference_passes(self):
+        self.assertEqual(self.check("see `nest/kilo/README.md` and [x](../agents/crow.md)"), [])
+
+    def test_placeholders_globs_and_dirs_are_skipped(self):
+        self.assertEqual(self.check("`nest/kilo/<bird>.jsonc`, `agents/*.md`, `roost/`, `skills/council/`"), [])
+
+
+class LabelsFile(unittest.TestCase):
+    def test_every_declared_label_parses(self):
+        spec = importlib.util.spec_from_file_location("sync_labels", validate.ROOT / "sync_labels.py")
+        sync_labels = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(sync_labels)
+        self.assertEqual(sync_labels.main(["--check"]), 0)
+
+
 class ReadonlyBash(unittest.TestCase):
     def test_scoped_bash_counts_as_bash(self):
         self.assertTrue(validate.has_any_bash("Read, Bash(gitleaks*)"))

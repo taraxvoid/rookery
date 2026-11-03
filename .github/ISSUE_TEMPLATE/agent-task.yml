@@ -1,0 +1,33 @@
+name: Agent-ready task
+description: Small and well-scoped enough to hand straight to an agent.
+title: "[agent] "
+labels: ["agent:ready"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Check this against the "What makes an issue agent:ready" bar in
+        CONVENTIONS.md first. If it needs an architecture call or a product
+        decision, or you can't state the acceptance criteria, file a plain
+        issue instead.
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: What should change, precisely enough that an agent doesn't have to guess.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: How a reviewer confirms it's done.
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Must not change
+      description: Files, paths or behavior that must stay as they are, if any.
+    validations:
+      required: false

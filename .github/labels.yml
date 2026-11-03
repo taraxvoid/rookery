@@ -1,0 +1,43 @@
+# Labels for agent work. CONVENTIONS.md says what each one means.
+# Applied by .github/workflows/sync-labels.yml on every change to main.
+# Labels not listed here (GitHub's defaults, Renovate's) are left alone.
+
+- name: "agent:ready"
+  color: "0E8A16"
+  description: "Scoped enough to hand to an agent. Nothing is picked up without it."
+
+- name: "agent:do-not-automate"
+  color: "B60205"
+  description: "Never automate; checked before agent:ready."
+
+- name: "agent:working"
+  color: "FBCA04"
+  description: "An agent has claimed this and is working on it."
+
+- name: "agent:needs-you"
+  color: "D93F0B"
+  description: "Agent is blocked on a human decision."
+
+- name: "agent:in-review"
+  color: "1D76DB"
+  description: "PR open, awaiting cross-review."
+
+- name: "agent:ready-to-merge"
+  color: "5319E7"
+  description: "Reviewed, gates pass."
+
+- name: "agent-authored"
+  color: "C5DEF5"
+  description: "Opened by an agent, whatever credentials it ran under."
+
+- name: "source:digest"
+  color: "BFD4F2"
+  description: "Filed by a crow from a tier-0 digest. Never auto-promoted to agent:ready."
+
+- name: "dependencies"
+  color: "0366D6"
+  description: "Dependency updates"
+
+- name: "security"
+  color: "B60205"
+  description: "Security updates and findings"
