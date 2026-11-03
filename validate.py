@@ -26,19 +26,33 @@ Checks:
 - every repo-relative file path in a tracked *.md (in backticks or a markdown
   link) resolves to a real file. Stale references survived two manual
   cleanups; re-reading prose doesn't catch them, so it has to be mechanical.
+  docs/plans/ is skipped: a plan names files that don't exist yet.
+- every flocks/<name>/ has a README.md and a flock.toml that matches the
+  schema (no unknown keys, repos as owner/name), and at least one flock
+  exists.
 """
 
 import json
 import re
 import sys
+import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).parent
 AGENTS_DIR = ROOT / "agents"
 KILO_DIR = ROOT / "nest" / "kilo"
 CLAUDE_SETTINGS = ROOT / "nest" / "claude" / "settings.json"
+FLOCKS_DIR = ROOT / "flocks"
+# Plans name files that don't exist yet, so the link check skips them.
+LINK_CHECK_SKIP = (ROOT / "docs" / "plans",)
+# flock.toml schema: key -> (type, required). Unknown keys fail, so a typo
+# can't silently drop a setting.
+FLOCK_KEYS = {"name": (str, True), "operator": (str, True), "repos": (list, True), "runners": (dict, False), "github_app": (dict, False)}
+FLOCK_RUNNER_KEYS = {"self_hosted": bool, "label": str}
+FLOCK_APP_KEYS = {"name": str, "client_id_secret": str, "private_key_secret": str, "status": str}
+_REPO_SLUG = re.compile(r"^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$")
 # Backtick spans and link targets that look like a path this repo owns.
-_REPO_TOP_LEVEL = ("agents/", "nest/", "roost/", "skills/", "tests/", ".github/", "../")
+_REPO_TOP_LEVEL = ("agents/", "nest/", "roost/", "skills/", "tests/", "flocks/", "docs/", ".github/", "../")
 _PATH_LIKE = re.compile(r"`([^`\s]+/[^`\s]+)`|\]\(([^)\s]+)\)")
 REQUIRED_FIELDS = ("name", "tier", "description", "model")
 DISALLOWED_FOR_READONLY = ("Edit", "Write", "NotebookEdit", "Task")
@@ -221,6 +235,52 @@ def check_links(path: Path) -> list[str]:
     return errors
 
 
+def check_flock(flock_dir: Path) -> list[str]:
+    where = f"flocks/{flock_dir.name}"
+    config_path = flock_dir / "flock.toml"
+    if not config_path.exists():
+        return [f"{where}: missing flock.toml"]
+    try:
+        config = tomllib.loads(config_path.read_text())
+    except tomllib.TOMLDecodeError as e:
+        return [f"{where}/flock.toml: invalid TOML: {e}"]
+
+    errors = []
+    if not (flock_dir / "README.md").exists():
+        errors.append(f"{where}: missing README.md")
+    for key in sorted(set(config) - set(FLOCK_KEYS)):
+        errors.append(f"{where}/flock.toml: unknown key {key!r}")
+    for key, (kind, required) in FLOCK_KEYS.items():
+        if key not in config:
+            if required:
+                errors.append(f"{where}/flock.toml: missing required key {key!r}")
+        elif not isinstance(config[key], kind):
+            errors.append(f"{where}/flock.toml: {key} must be a {kind.__name__}")
+    if isinstance(config.get("name"), str) and config["name"] != flock_dir.name:
+        errors.append(f"{where}/flock.toml: name {config['name']!r} != directory {flock_dir.name!r}")
+
+    repos = config.get("repos")
+    if isinstance(repos, list):
+        if not repos:
+            errors.append(f"{where}/flock.toml: repos must not be empty")
+        for repo in repos:
+            if not isinstance(repo, str) or not _REPO_SLUG.match(repo):
+                errors.append(f"{where}/flock.toml: repo {repo!r} must be 'owner/name'")
+        if len(set(map(str, repos))) != len(repos):
+            errors.append(f"{where}/flock.toml: repos has duplicates")
+
+    for table, schema in (("runners", FLOCK_RUNNER_KEYS), ("github_app", FLOCK_APP_KEYS)):
+        section = config.get(table)
+        if not isinstance(section, dict):
+            continue
+        for key, value in section.items():
+            if key not in schema:
+                errors.append(f"{where}/flock.toml: unknown key {table}.{key}")
+            elif not isinstance(value, schema[key]):
+                errors.append(f"{where}/flock.toml: {table}.{key} must be a {schema[key].__name__}")
+    return errors
+
+
 def main() -> int:
     all_errors = []
     readonly_by_name: dict[str, bool] = {}
@@ -249,7 +309,17 @@ def main() -> int:
     if CLAUDE_SETTINGS.exists():
         all_errors.extend(check_claude_settings(CLAUDE_SETTINGS))
 
-    md_paths = [p for p in sorted(ROOT.rglob("*.md")) if not {".git", ".venv", "node_modules"} & set(p.parts)]
+    flock_dirs = sorted(p for p in FLOCKS_DIR.glob("*") if p.is_dir()) if FLOCKS_DIR.exists() else []
+    if not flock_dirs:
+        all_errors.append("flocks/: no flocks found")
+    for flock_dir in flock_dirs:
+        all_errors.extend(check_flock(flock_dir))
+
+    md_paths = [
+        p for p in sorted(ROOT.rglob("*.md"))
+        if not {".git", ".venv", "node_modules"} & set(p.parts)
+        and not any(p.is_relative_to(skip) for skip in LINK_CHECK_SKIP)
+    ]
     for path in md_paths:
         all_errors.extend(check_links(path))
 
@@ -262,6 +332,7 @@ def main() -> int:
     print(f"agents: {len(agent_paths)} personas OK")
     print(f"nest/kilo: {len(kilo_paths)} configs OK")
     print("nest/claude/settings.json: safe-git policy OK")
+    print(f"flocks: {len(flock_dirs)} OK ({', '.join(d.name for d in flock_dirs)})")
     print(f"docs: file references in {len(md_paths)} markdown files OK")
     return 0
 
