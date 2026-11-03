@@ -147,6 +147,22 @@ that proves the trigger end to end. It's built so issue text can't steer the age
   one-line change it was asked for, so nothing else it saw can leave in the PR.
 - Every action is pinned to a commit SHA, and the checkout keeps no credentials.
 
+### Digests
+
+`scripts/run-digest.sh <owl|tern> <repo-path> <owner/repo>` runs a digest bird,
+then a crow to triage what it found. Digests read logs and analytics that
+anyone can write into, so the same rule applies as for dispatch:
+
+- The bird runs read-only in `dontAsk` mode; nothing it reads can make it act.
+- Only the digest's `issue-candidates` block reaches the crow, after
+  [`nest/digest.py`](nest/digest.py) checks it: known fields, length limits, at
+  most 10 entries, and the target repo set by the caller, never by the digest.
+- The crow can only search, comment and file issues in that one repo. Filed
+  issues carry `source:digest` and never `agent:ready`, so a human decides what
+  becomes agent work.
+
+It runs by hand or from cron today; a scheduled workflow is the next step.
+
 ## Roost
 
 Worktrees are disposable; the roost isn't. Any persona above tier 0 that learns
