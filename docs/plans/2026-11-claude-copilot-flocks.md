@@ -95,7 +95,7 @@ flocks/
   README.md                     what a flock is; how to start one
   example/                      template, no real values
   ravenflight/
-    flock.toml                    repos covered, labels, runners, GitHub App, budgets
+    flock.toml                    repos covered, runners, GitHub App (labels are shared, not per flock)
     roost/                        ravenflight-specific lessons
     README.md                     "how ravenflight runs rookery"
 docs/decisions/                 0001 Kilo+OpenRouter (from ravenflight#20, superseded), 0002 this decision
@@ -113,10 +113,14 @@ than either alone.
    ravenflight#20, marked superseded) and `0002` (this decision).
 2. Add `flocks/ravenflight/`. `flock.toml` carries:
    - the repos covered (ravenflight.io, rvnflt, flock, rookery)
-   - the labels
    - the self-hosted runner toggle (ported from ravenflight#26)
    - the `ravenflight-aviary` App name (ravenflight#14)
-   - per-vendor budgets as the operator's record
+
+   Labels are not per flock: every flock uses rookery's `.github/labels.yml`,
+   so the agent state machine means the same thing in every repo. Other repos
+   adopt it through a reusable label-sync workflow pinned to a rookery SHA
+   (taraxvoid/voidflow#297). Budgets live in the flock's README until
+   something reads them.
 
    Move the ravenflight.io roost entries there.
 3. `validate.py` checks each flock's schema and fails loudly if `flocks/` is
