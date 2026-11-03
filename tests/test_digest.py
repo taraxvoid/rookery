@@ -49,7 +49,7 @@ class Rejects(unittest.TestCase):
         self.assertRejected(wrap([dict(GOOD, repo="someone/else")]))
 
     def test_unknown_fields(self):
-        self.assertRejected(wrap([dict(GOOD, labels=["agent:ready"])]))
+        self.assertRejected(wrap([dict(GOOD, labels=["ready-for-agent"])]))
 
     def test_missing_or_non_string_fields(self):
         self.assertRejected(wrap([{k: v for k, v in GOOD.items() if k != "evidence"}]))

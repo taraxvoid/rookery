@@ -130,16 +130,16 @@ what would leave the machine.
 ## Working with GitHub
 
 Work enters through labels and is tracked through labels: nothing is picked up
-without `agent:ready`, a claim comment plus `agent:working` stops two tools
+without `ready-for-agent`, a claim comment plus `agent-working` stops two tools
 taking the same issue, and agent branches are `agent/<bird>/<issue>-<slug>`.
 [CONVENTIONS.md](CONVENTIONS.md) has the full label set, the bar an issue must
-clear to be `agent:ready`, and how agents escalate. Labels live in
+clear to be `ready-for-agent`, and how agents escalate. Labels live in
 [`.github/labels.yml`](.github/labels.yml) and sync on merge.
 
 ### Dispatch workflow
 
 [`agent-dispatch.yml`](.github/workflows/agent-dispatch.yml) runs when
-`agent:ready` is added. Today it's a smoke test (claim comment plus a draft PR)
+`ready-for-agent` is added. Today it's a smoke test (claim comment plus a draft PR)
 that proves the trigger end to end. It's built so issue text can't steer the agent:
 
 - It only runs when the person adding the label has write access **and** the
@@ -164,7 +164,7 @@ anyone can write into, so the same rule applies as for dispatch:
   [`nest/digest.py`](nest/digest.py) checks it: known fields, length limits, at
   most 10 entries, and the target repo set by the caller, never by the digest.
 - The crow can only search, comment and file issues in that one repo. Filed
-  issues carry `source:digest` and never `agent:ready`, so a human decides what
+  issues carry `from-digest` and never `ready-for-agent`, so a human decides what
   becomes agent work.
 
 It runs by hand or from cron today; a scheduled workflow is the next step.

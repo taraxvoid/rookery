@@ -1,12 +1,12 @@
 name: Agent-ready task
 description: Small and well-scoped enough to hand straight to an agent.
 title: "[agent] "
-labels: ["agent:ready"]
+labels: ["ready-for-agent"]
 body:
   - type: markdown
     attributes:
       value: |
-        Check this against the "What makes an issue agent:ready" bar in
+        Check this against the "What makes an issue ready-for-agent" bar in
         CONVENTIONS.md first. If it needs an architecture call or a product
         decision, or you can't state the acceptance criteria, file a plain
         issue instead.

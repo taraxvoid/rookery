@@ -36,7 +36,7 @@ publish. Keep the same layout so the validator can check it.
 | Key | Type | Required | Meaning |
 |---|---|---|---|
 | `name` | string | yes | Must match the directory name |
-| `operator` | string | yes | GitHub login of the human who answers `agent:needs-you` |
+| `operator` | string | yes | GitHub login of the human who answers `needs-you` |
 | `repos` | list of `owner/name` | yes | Repos the flock's agents may work in |
 | `runners.self_hosted` | bool | no | Run jobs on self-hosted runners instead of GitHub-hosted ones |
 | `runners.label` | string | no | Runner label used when `self_hosted` is true |

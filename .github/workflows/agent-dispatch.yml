@@ -1,6 +1,6 @@
 name: Agent dispatch
 
-# Runs when `agent:ready` is added to an issue. Today it's a smoke test that
+# Runs when `ready-for-agent` is added to an issue. Today it's a smoke test that
 # proves the path end to end: claim comment, Claude Code edits one file, the
 # workflow opens a draft PR.
 #
@@ -31,8 +31,8 @@ concurrency:
 jobs:
   gate:
     if: >-
-      github.event.label.name == 'agent:ready' &&
-      !contains(github.event.issue.labels.*.name, 'agent:do-not-automate') &&
+      github.event.label.name == 'ready-for-agent' &&
+      !contains(github.event.issue.labels.*.name, 'no-agents') &&
       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association)
     runs-on: ubuntu-latest
     permissions:
@@ -70,7 +70,7 @@ jobs:
     steps:
       - name: Claim
         run: |
-          gh issue edit "$ISSUE" --repo "$GITHUB_REPOSITORY" --add-label agent:working --remove-label agent:ready
+          gh issue edit "$ISSUE" --repo "$GITHUB_REPOSITORY" --add-label agent-working --remove-label ready-for-agent
           gh issue comment "$ISSUE" --repo "$GITHUB_REPOSITORY" --body "Dispatch smoke test claimed this, working in \`$BRANCH\`. No work is done on the issue's content."
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -119,6 +119,6 @@ jobs:
           git commit -am "chore(roost): dispatch smoke test for #$ISSUE"
           git push -u origin "$BRANCH"
           gh pr create --draft --head "$BRANCH" \
-            --title "[smoke test] agent:ready dispatch for #$ISSUE" \
+            --title "[smoke test] ready-for-agent dispatch for #$ISSUE" \
             --body "Refs #$ISSUE. Smoke test only; does not resolve the issue."
-          gh issue edit "$ISSUE" --repo "$GITHUB_REPOSITORY" --add-label agent:in-review --remove-label agent:working
+          gh issue edit "$ISSUE" --repo "$GITHUB_REPOSITORY" --add-label in-review --remove-label agent-working

@@ -168,7 +168,7 @@ In voidchores, or a scratch repo:
    - Keep the Claude settings checks and the no-Bash-in-read-only-`tools:`
      rule.
 3. Replace `agent-dispatch.yml` with `agent-dispatch.md`:
-   - trigger: `names: [agent:ready]`
+   - trigger: `names: [ready-for-agent]`
    - `roles: [admin, maintainer, write]`
    - the author-association gate
    - engine: Claude, for a crow-shaped task with an API key in an

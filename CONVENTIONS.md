@@ -14,19 +14,24 @@ rookery copy the file and the workflow.
 
 | Label | Meaning | On |
 |---|---|---|
-| `agent:ready` | A human decided this is scoped enough to hand to an agent. Nothing is picked up without it. | Issues |
-| `agent:do-not-automate` | Never automate. Checked before `agent:ready`. | Issues |
-| `agent:working` | An agent has claimed this and is on it. | Issues, PRs |
-| `agent:needs-you` | Blocked on a human decision. | Issues, PRs |
-| `agent:in-review` | PR open, awaiting review before merge. | PRs |
-| `agent:ready-to-merge` | Reviewed, gates pass. | PRs |
+| `ready-for-agent` | A human decided this is scoped enough to hand to an agent. Nothing is picked up without it. | Issues |
+| `no-agents` | Never automate. Checked before `ready-for-agent`. | Issues |
+| `agent-working` | An agent has claimed this and is on it. | Issues, PRs |
+| `needs-you` | Blocked on a human decision. | Issues, PRs |
+| `in-review` | PR open, awaiting review before merge. | PRs |
+| `ready-to-merge` | Reviewed, gates pass. | PRs |
 | `agent-authored` | Opened by an agent, whatever credentials it ran under. | Issues, PRs |
-| `source:digest` | Filed by a crow from a tier-0 digest, not by a human. Never auto-promoted to `agent:ready`. | Issues |
+| `from-digest` | Filed by a crow from a tier-0 digest, not by a human. Never auto-promoted to `ready-for-agent`. | Issues |
 
-The four in-flight states match [Agent Orchestrator](https://github.com/OrchestratorInc/agent-orchestrator)'s
-board columns, so GitHub and the orchestrator never describe one task two ways.
+Names are lowercase words joined by hyphens, so they read plainly in a label
+list and never need quoting in a shell command or a permission pattern.
+`needs-you`, `in-review` and `ready-to-merge` carry no `agent` prefix: they mean
+the same thing whether an agent, a bot or a person is doing the work, so other
+workflows (dependency review, for one) reuse them rather than adding a second
+label for the same state. When a label is renamed, `labels.yml` records its
+old name under `was:` and the sync renames it in place, so open issues keep it.
 
-## What makes an issue `agent:ready`
+## What makes an issue `ready-for-agent`
 
 Add the label (or file with the **Agent-ready task** issue template, which adds
 it) only when all of these hold:
@@ -46,7 +51,7 @@ anonymous-submission dashboard better", which hides a product decision.
 ## Claiming
 
 Before doing anything else, the agent comments with its name and branch and
-swaps `agent:ready` for `agent:working`:
+swaps `ready-for-agent` for `agent-working`:
 
 > crow claimed this, working in `agent/crow/123-reject-disposable-emails`
 
@@ -73,7 +78,7 @@ check is tracked separately.
 
 When stuck (ambiguous requirements, a decision above its tier, repeated
 failure), an agent comments saying exactly what it's stuck on, adds
-`agent:needs-you` and stops. It doesn't keep retrying and doesn't guess past
+`needs-you` and stops. It doesn't keep retrying and doesn't guess past
 its tier: a bird hands off to a crow, a crow to a raven, a raven to a human.
 
 ## Review of sensitive paths
