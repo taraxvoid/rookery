@@ -10,3 +10,6 @@
 # permission rules, spend limits, and the validator that holds them together.
 /nest/ @taraxvoid
 /validate.py @taraxvoid
+
+# Which repos agents may work in, runner routing and App secret names.
+/flocks/*/flock.toml @taraxvoid

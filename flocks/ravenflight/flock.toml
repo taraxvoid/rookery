@@ -1,0 +1,24 @@
+# RavenFlight's flock. Schema: flocks/README.md.
+
+name = "ravenflight"
+operator = "taraxvoid"
+repos = [
+  "ravenflight/ravenflight.io", # production site
+  "ravenflight/rvnflt",         # BUSINESS.MD parser/CLI
+  "ravenflight/flock",          # self-hosted runner infra (unrelated to this directory's name)
+  "taraxvoid/rookery",          # this repo
+]
+
+[runners]
+# CI reads the SELF_HOSTED_RUNNERS repo variable; when it's "true", jobs run
+# on runners labeled below, otherwise on ubuntu-latest.
+self_hosted = false
+label = "rookery"
+
+[github_app]
+# Separate from ravenflight-releases (release-please's App) so a bug in an
+# agent workflow can't reach anything the release token can, and vice versa.
+name = "ravenflight-aviary"
+client_id_secret = "AVIARY_BOT_CLIENT_ID"
+private_key_secret = "AVIARY_BOT_APP_PRIVATE_KEY"
+status = "planned"

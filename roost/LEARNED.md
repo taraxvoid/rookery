@@ -32,7 +32,8 @@ move: it still pointed at the old path, found zero files, and passed. **Rule**:
 a validator that can silently check nothing is worse than none. It must fail
 when the directory it's about to scan is missing or empty.
 
-**First end-to-end unit**: a real issue in a production site's repo (reject
+**First end-to-end unit** (repo specifics in
+[`flocks/ravenflight/roost/`](../flocks/ravenflight/roost/LEARNED.md)): a real issue in a production site's repo (reject
 disposable email domains at signup) went all the way to a PR: code change in the
 one shared validation helper, tests added, build, type check, lint, unit and
 Playwright suites all green, pre-commit and pre-push hooks clean, PR linked to

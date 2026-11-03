@@ -83,3 +83,49 @@ class ReadonlyBash(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Flocks(unittest.TestCase):
+    GOOD = 'name = "demo"\noperator = "someone"\nrepos = ["org/app"]\n'
+
+    def check(self, toml: str, name: str = "demo", readme: bool = True) -> list[str]:
+        with tempfile.TemporaryDirectory() as tmp:
+            flock = Path(tmp) / name
+            flock.mkdir()
+            (flock / "flock.toml").write_text(toml)
+            if readme:
+                (flock / "README.md").write_text("# demo\n")
+            return validate.check_flock(flock)
+
+    def test_shipped_flocks_pass(self):
+        for flock in sorted(p for p in validate.FLOCKS_DIR.iterdir() if p.is_dir()):
+            with self.subTest(flock=flock.name):
+                self.assertEqual(validate.check_flock(flock), [])
+
+    def test_minimal_flock_passes(self):
+        self.assertEqual(self.check(self.GOOD), [])
+
+    def test_name_must_match_directory(self):
+        self.assertTrue(any("!= directory" in e for e in self.check(self.GOOD, name="other")))
+
+    def test_unknown_key_fails(self):
+        self.assertTrue(any("unknown key 'lables'" in e for e in self.check(self.GOOD + 'lables = []\n')))
+
+    def test_unknown_nested_key_fails(self):
+        errors = self.check(self.GOOD + '[runners]\nself_hosted = true\nlable = "x"\n')
+        self.assertTrue(any("runners.lable" in e for e in errors), errors)
+
+    def test_bad_repo_slug_fails(self):
+        errors = self.check('name = "demo"\noperator = "someone"\nrepos = ["not-a-slug"]\n')
+        self.assertTrue(any("owner/name" in e for e in errors), errors)
+
+    def test_empty_repos_fails(self):
+        errors = self.check('name = "demo"\noperator = "someone"\nrepos = []\n')
+        self.assertTrue(any("must not be empty" in e for e in errors), errors)
+
+    def test_missing_readme_fails(self):
+        self.assertTrue(any("README.md" in e for e in self.check(self.GOOD, readme=False)))
+
+    def test_wrong_type_fails(self):
+        errors = self.check(self.GOOD + '[runners]\nself_hosted = "yes"\n')
+        self.assertTrue(any("must be a bool" in e for e in errors), errors)

@@ -14,8 +14,14 @@ agents/   persona definitions (Claude Code subagent format)
 skills/   shared skills personas can invoke
 nest/     enforcement: Kilo configs, Claude Code permissions, spend-as-code
 roost/    durable lessons that outlive a worktree
+flocks/   per-operator deployments; ravenflight/ is the reference one
+docs/     decisions (ADRs) and plans
 tests/    validator and spend.py tests (stdlib, mock data, no accounts needed)
 ```
+
+Where this is heading: Claude Code for attended development, Copilot through
+GitHub Agentic Workflows for unattended chores, with rookery as the policy
+layer over both. See [decision 0002](docs/decisions/0002-claude-copilot-gh-aw.md).
 
 ## Design
 
@@ -181,6 +187,15 @@ before starting.
 
 Repo-specific behavior belongs in each target repo's own `CLAUDE.md`; this repo
 only holds what's shared across repos.
+
+## Flocks
+
+A flock is one operator's deployment: which repos it covers, its runners, its
+GitHub App and its own roost entries. Start one from
+[`flocks/example/`](flocks/example/flock.toml); `validate.py` checks every
+`flock.toml` against the schema in [`flocks/README.md`](flocks/README.md).
+[`flocks/ravenflight/`](flocks/ravenflight/README.md) is how RavenFlight runs
+rookery, kept here as the worked example.
 
 Planned work is tracked in [issues](https://github.com/taraxvoid/rookery/issues).
 
