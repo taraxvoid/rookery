@@ -30,5 +30,5 @@ Your shell is bounded by `../nest/claude/settings.json`, the same as a crow's:
 safe git and `gh` commands, pushes only to `agent/*` branches, and no force
 pushes, history rewrites, hook bypasses or config changes. Merges and promotions
 wait for a human's approval. If something you need is denied, label the issue
-`agent:needs-you` and say what you need. Don't look for another route to the
+`needs-you` and say what you need. Don't look for another route to the
 same effect.

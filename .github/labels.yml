@@ -1,28 +1,40 @@
 # Labels for agent work. CONVENTIONS.md says what each one means.
 # Applied by .github/workflows/sync-labels.yml on every change to main.
 # Labels not listed here (GitHub's defaults, Renovate's) are left alone.
+#
+# Names are lowercase words joined by hyphens: readable, and never needing
+# quotes in a shell command or a permission pattern such as
+# Bash(gh *ready-for-agent*). sync_labels.py rejects anything else.
+# `was:` names the label's previous name, so the sync renames it in place
+# (issues keep it) instead of creating a second label.
 
-- name: "agent:ready"
+- name: "ready-for-agent"
+  was: "agent:ready"
   color: "0E8A16"
   description: "Scoped enough to hand to an agent. Nothing is picked up without it."
 
-- name: "agent:do-not-automate"
+- name: "no-agents"
+  was: "agent:do-not-automate"
   color: "B60205"
-  description: "Never automate; checked before agent:ready."
+  description: "Never automate; checked before ready-for-agent."
 
-- name: "agent:working"
+- name: "agent-working"
+  was: "agent:working"
   color: "FBCA04"
   description: "An agent has claimed this and is working on it."
 
-- name: "agent:needs-you"
+- name: "needs-you"
+  was: "agent:needs-you"
   color: "D93F0B"
-  description: "Agent is blocked on a human decision."
+  description: "Blocked on a human decision, whoever or whatever was working on it."
 
-- name: "agent:in-review"
+- name: "in-review"
+  was: "agent:in-review"
   color: "1D76DB"
   description: "PR open, awaiting cross-review."
 
-- name: "agent:ready-to-merge"
+- name: "ready-to-merge"
+  was: "agent:ready-to-merge"
   color: "5319E7"
   description: "Reviewed, gates pass."
 
@@ -30,9 +42,10 @@
   color: "C5DEF5"
   description: "Opened by an agent, whatever credentials it ran under."
 
-- name: "source:digest"
+- name: "from-digest"
+  was: "source:digest"
   color: "BFD4F2"
-  description: "Filed by a crow from a tier-0 digest. Never auto-promoted to agent:ready."
+  description: "Filed by a crow from a tier-0 digest. Never auto-promoted to ready-for-agent."
 
 - name: "dependencies"
   color: "0366D6"

@@ -14,8 +14,14 @@ agents/   persona definitions (Claude Code subagent format)
 skills/   shared skills personas can invoke
 nest/     enforcement: Kilo configs, Claude Code permissions, spend-as-code
 roost/    durable lessons that outlive a worktree
+flocks/   per-operator deployments; ravenflight/ is the reference one
+docs/     decisions (ADRs) and plans
 tests/    validator and spend.py tests (stdlib, mock data, no accounts needed)
 ```
+
+Where this is heading: Claude Code for attended development, Copilot through
+GitHub Agentic Workflows for unattended chores, with rookery as the policy
+layer over both. See [decision 0002](docs/decisions/0002-claude-copilot-gh-aw.md).
 
 ## Design
 
@@ -124,16 +130,16 @@ what would leave the machine.
 ## Working with GitHub
 
 Work enters through labels and is tracked through labels: nothing is picked up
-without `agent:ready`, a claim comment plus `agent:working` stops two tools
+without `ready-for-agent`, a claim comment plus `agent-working` stops two tools
 taking the same issue, and agent branches are `agent/<bird>/<issue>-<slug>`.
 [CONVENTIONS.md](CONVENTIONS.md) has the full label set, the bar an issue must
-clear to be `agent:ready`, and how agents escalate. Labels live in
+clear to be `ready-for-agent`, and how agents escalate. Labels live in
 [`.github/labels.yml`](.github/labels.yml) and sync on merge.
 
 ### Dispatch workflow
 
 [`agent-dispatch.yml`](.github/workflows/agent-dispatch.yml) runs when
-`agent:ready` is added. Today it's a smoke test (claim comment plus a draft PR)
+`ready-for-agent` is added. Today it's a smoke test (claim comment plus a draft PR)
 that proves the trigger end to end. It's built so issue text can't steer the agent:
 
 - It only runs when the person adding the label has write access **and** the
@@ -158,7 +164,7 @@ anyone can write into, so the same rule applies as for dispatch:
   [`nest/digest.py`](nest/digest.py) checks it: known fields, length limits, at
   most 10 entries, and the target repo set by the caller, never by the digest.
 - The crow can only search, comment and file issues in that one repo. Filed
-  issues carry `source:digest` and never `agent:ready`, so a human decides what
+  issues carry `from-digest` and never `ready-for-agent`, so a human decides what
   becomes agent work.
 
 It runs by hand or from cron today; a scheduled workflow is the next step.
@@ -181,6 +187,15 @@ before starting.
 
 Repo-specific behavior belongs in each target repo's own `CLAUDE.md`; this repo
 only holds what's shared across repos.
+
+## Flocks
+
+A flock is one operator's deployment: which repos it covers, its runners, its
+GitHub App and its own roost entries. Start one from
+[`flocks/example/`](flocks/example/flock.toml); `validate.py` checks every
+`flock.toml` against the schema in [`flocks/README.md`](flocks/README.md).
+[`flocks/ravenflight/`](flocks/ravenflight/README.md) is how RavenFlight runs
+rookery, kept here as the worked example.
 
 Planned work is tracked in [issues](https://github.com/taraxvoid/rookery/issues).
 

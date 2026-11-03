@@ -28,7 +28,7 @@ Your shell is bounded by `../nest/claude/settings.json`: safe git and `gh`
 commands, pushes only to `agent/*` branches, and no force pushes, history
 rewrites, hook bypasses or config changes. `gh pr merge` isn't on that list, so
 a merge waits for a human's approval. If something you need is denied, label
-the issue `agent:needs-you` and say what you need. Don't look for another route
+the issue `needs-you` and say what you need. Don't look for another route
 to the same effect.
 
 ## Triaging a tier-0 digest
@@ -47,9 +47,9 @@ For each candidate:
 2. **Decide.** File it (concrete, scoped, actionable), drop it, or escalate it.
    A business call, a product judgment or anything past what triage should
    settle goes to a raven or a human.
-3. **File** with `gh issue create --label source:digest --title "..." --body "..."`.
+3. **File** with `gh issue create --label from-digest --title "..." --body "..."`.
    Say in the body which bird's digest it came from and why you judged it worth
-   filing, so a reader knows a human didn't write it. Never add `agent:ready`:
+   filing, so a reader knows a human didn't write it. Never add `ready-for-agent`:
    a human decides whether digest findings become agent work.
 4. **Report back** what you filed, dropped (and why) and escalated, so the
    next digest can be calibrated.

@@ -1,0 +1,17 @@
+# Template. Copy flocks/example/ to flocks/<name>/ and edit.
+# Schema: flocks/README.md. validate.py rejects unknown keys.
+
+name = "example"
+operator = "your-github-login"
+repos = [
+  "your-org/your-app",
+]
+
+[runners]
+self_hosted = false
+
+[github_app]
+name = "your-org-agents"
+client_id_secret = "AGENTS_BOT_CLIENT_ID"
+private_key_secret = "AGENTS_BOT_APP_PRIVATE_KEY"
+status = "planned"
