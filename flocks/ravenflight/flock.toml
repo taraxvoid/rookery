@@ -1,0 +1,16 @@
+name = "ravenflight"
+repos = [
+  "ravenflight/ravenflight.io",
+  "ravenflight/rvnflt",
+  "ravenflight/flock",
+]
+
+[runners]
+# Ported from ravenflight/rookery#26: jobs use GitHub-hosted runners unless the
+# repo variable SELF_HOSTED_RUNNERS is 'true', in which case they target the
+# runner labelled below (the ravenflight/flock runner repo provisions it).
+self_hosted = false
+label = "rookery"
+
+[github_app]
+name = "ravenflight-aviary"

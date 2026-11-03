@@ -75,6 +75,39 @@ class LabelsFile(unittest.TestCase):
         self.assertEqual(sync_labels.main(["--check"]), 0)
 
 
+class Flocks(unittest.TestCase):
+    GOOD = (
+        'name = "{name}"\nrepos = ["o/r"]\n[runners]\nself_hosted = false\nlabel = "x"\n'
+        '[github_app]\nname = "app"\n'
+    )
+
+    def check(self, text: str, name: str = "f") -> list[str]:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            old = validate.ROOT
+            validate.ROOT = root
+            try:
+                path = root / "flocks" / name / "flock.toml"
+                path.parent.mkdir(parents=True)
+                path.write_text(text)
+                return validate.check_flock(path)
+            finally:
+                validate.ROOT = old
+
+    def test_good_flock_passes(self):
+        self.assertEqual(self.check(self.GOOD.format(name="f")), [])
+
+    def test_name_must_match_directory(self):
+        self.assertTrue(self.check(self.GOOD.format(name="other")))
+
+    def test_bad_repo_and_missing_sections_fail(self):
+        self.assertTrue(self.check('name = "f"\nrepos = ["nope"]\n'))
+        self.assertTrue(self.check('name = "f"\nrepos = []\n'))
+
+    def test_invalid_toml_fails(self):
+        self.assertTrue(self.check("name = "))
+
+
 class ReadonlyBash(unittest.TestCase):
     def test_scoped_bash_counts_as_bash(self):
         self.assertTrue(validate.has_any_bash("Read, Bash(gitleaks*)"))

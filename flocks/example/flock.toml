@@ -1,0 +1,9 @@
+name = "example"
+repos = ["example/app"]
+
+[runners]
+self_hosted = false
+label = "rookery"
+
+[github_app]
+name = "example-aviary"

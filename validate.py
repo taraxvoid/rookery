@@ -31,6 +31,7 @@ Checks:
 import json
 import re
 import sys
+import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).parent
@@ -221,6 +222,36 @@ def check_links(path: Path) -> list[str]:
     return errors
 
 
+FLOCKS_DIR = ROOT / "flocks"
+_REPO_SLUG = re.compile(r"^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$")
+
+
+def check_flock(path: Path) -> list[str]:
+    """path is flocks/<name>/flock.toml."""
+    rel = path.relative_to(ROOT)
+    try:
+        data = tomllib.loads(path.read_text())
+    except tomllib.TOMLDecodeError as e:
+        return [f"{rel}: not valid TOML: {e}"]
+    errors = []
+    if data.get("name") != path.parent.name:
+        errors.append(f"{rel}: name must match the directory ({path.parent.name!r})")
+    repos = data.get("repos")
+    if not isinstance(repos, list) or not repos:
+        errors.append(f"{rel}: repos must be a non-empty list")
+    else:
+        errors.extend(f"{rel}: bad repo {r!r}, want owner/name" for r in repos if not (isinstance(r, str) and _REPO_SLUG.match(r)))
+    runners = data.get("runners", {})
+    if not isinstance(runners.get("self_hosted"), bool):
+        errors.append(f"{rel}: runners.self_hosted must be true or false")
+    if not isinstance(runners.get("label"), str) or not runners.get("label"):
+        errors.append(f"{rel}: runners.label must be a non-empty string")
+    app = data.get("github_app", {})
+    if not isinstance(app.get("name"), str) or not app.get("name"):
+        errors.append(f"{rel}: github_app.name must be a non-empty string")
+    return errors
+
+
 def main() -> int:
     all_errors = []
     readonly_by_name: dict[str, bool] = {}
@@ -249,8 +280,18 @@ def main() -> int:
     if CLAUDE_SETTINGS.exists():
         all_errors.extend(check_claude_settings(CLAUDE_SETTINGS))
 
+    # Same rule as everywhere: scanning zero flocks must fail, not pass.
+    flock_paths = sorted(FLOCKS_DIR.glob("*/flock.toml"))
+    if not flock_paths:
+        all_errors.append("flocks/: no flock.toml found")
+    for path in flock_paths:
+        all_errors.extend(check_flock(path))
+
     md_paths = [p for p in sorted(ROOT.rglob("*.md")) if not {".git", ".venv", "node_modules"} & set(p.parts)]
     for path in md_paths:
+        # Plans name files they intend to create, so they can't resolve yet.
+        if (ROOT / "docs" / "plans") in path.parents:
+            continue
         all_errors.extend(check_links(path))
 
     if all_errors:
@@ -262,6 +303,7 @@ def main() -> int:
     print(f"agents: {len(agent_paths)} personas OK")
     print(f"nest/kilo: {len(kilo_paths)} configs OK")
     print("nest/claude/settings.json: safe-git policy OK")
+    print(f"flocks: {len(flock_paths)} flocks OK")
     print(f"docs: file references in {len(md_paths)} markdown files OK")
     return 0
 

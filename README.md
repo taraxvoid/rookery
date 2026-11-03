@@ -182,6 +182,10 @@ before starting.
 Repo-specific behavior belongs in each target repo's own `CLAUDE.md`; this repo
 only holds what's shared across repos.
 
+**Flocks**: one operator's deployment (repos, runners, GitHub App, lessons) lives
+in `flocks/<name>/`; [`flocks/ravenflight/`](flocks/ravenflight/README.md) is the
+reference. Decisions are in [`docs/decisions/`](docs/decisions/0002-claude-copilot-flocks.md).
+
 Planned work is tracked in [issues](https://github.com/taraxvoid/rookery/issues).
 
 ## License
