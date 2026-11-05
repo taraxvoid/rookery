@@ -61,7 +61,7 @@ provide each of those.
 
 ## Evidence so far
 
-taraxvoid/voidchores#1 runs a weekly research workflow on gh-aw with the
+taraxvoid/voidlife#1 runs a weekly research workflow on gh-aw with the
 Copilot engine. It compiles under `--strict`, filters comments with
 `min-integrity: approved`, and limits writes to one directory.
 

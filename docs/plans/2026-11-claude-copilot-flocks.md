@@ -55,7 +55,7 @@ These still hold from the first assessment's corrections:
 - Issue text must not steer an agent.
 - gh-aw moves fast: pin the compiler version and commit the lock files. (It
   went [GA on 2026-10-28](https://github.blog/changelog/2026-10-28-github-agentic-workflows-generally-available/);
-  the "preview" in the first assessment was out of date. voidchores pins
+  the "preview" in the first assessment was out of date. voidlife pins
   v1.0.1.)
 - taraxvoid/rookery and ravenflight/rookery have already drifted, so there
   should be one source of truth.
@@ -77,7 +77,7 @@ firewall, threat detection and safe outputs.
 | canary | gh-aw `steps:` run gitleaks/grype deterministically; Copilot only triages the output | No shell for the agent; the scanners aren't agent tools |
 | vixen | not live (#14 unchanged) | — |
 
-voidchores fits gh-aw's strongest use case: scheduled, repo-scoped chores with
+voidlife fits gh-aw's strongest use case: scheduled, repo-scoped chores with
 writes that are filtered and kept small. Treat it as the home for one flock's
 unattended workflows. Every workflow there imports a persona fragment from
 rookery pinned to a SHA.
@@ -133,7 +133,7 @@ Semver: tag `v0.1.0` before this phase. Phase 0 is additive, so it's `v0.2.0`.
 
 ### Phase 1: gh-aw + Copilot, read-only first (one evening)
 
-In voidchores, or a scratch repo:
+In voidlife, or a scratch repo:
 1. owl- or tern-shaped `schedule` workflow: Copilot engine, `strict: true`,
    read permissions, `create-issue` only, `network.allowed` minimal. Check that
    it runs, the issue lands, and the per-run cost (premium requests plus
@@ -196,7 +196,7 @@ persona.
 
 ### Phase 4: flocks consume rookery
 
-- voidchores and the ravenflight repos import fragments
+- voidlife and the ravenflight repos import fragments
   `taraxvoid/rookery/nest/gh-aw/shared/<bird>.md@<sha>`. Renovate bumps the
   pins.
 - Self-hosted runners for gh-aw must be Linux with Docker, disposable, carry no
