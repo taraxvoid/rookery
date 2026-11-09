@@ -96,6 +96,9 @@ class ExtraLabels(unittest.TestCase):
     def test_malformed_extra_file_fails(self):
         self.assertEqual(self.check('- name: "oops"\n'), 1)
 
+    def test_unknown_option_fails(self):
+        self.assertEqual(self.sync_labels.main(["--chek"]), 2)
+
     def test_missing_extra_file_fails(self):
         self.assertEqual(self.sync_labels.main(["--check", "/nonexistent/extra.yml"]), 1)
 

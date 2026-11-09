@@ -41,6 +41,7 @@ def parse_labels(text: str) -> list[dict[str, str]]:
 
 
 def name_errors(labels: list[dict[str, str]]) -> list[str]:
+    """Problems with label names: bad format, duplicates, or a name that is also a `was`."""
     errors = [f"{l['name']!r}: use lowercase words joined by hyphens" for l in labels if not _NAME.match(l["name"])]
     names = [l["name"] for l in labels]
     errors += [f"{n!r}: declared twice" for n in sorted({n for n in names if names.count(n) > 1})]
@@ -75,6 +76,11 @@ def load(paths: list[Path]) -> tuple[list[dict[str, str]], list[str]]:
 
 
 def main(argv: list[str]) -> int:
+    """Sync (or with --check, print) rookery's labels plus any extra files in argv."""
+    unknown = [a for a in argv if a.startswith("--") and a != "--check"]
+    if unknown:
+        print(f"unknown option: {' '.join(unknown)}", file=sys.stderr)
+        return 2
     paths = [LABELS_FILE, *(Path(a) for a in argv if not a.startswith("--"))]
     labels, problems = load(paths)
     if problems:

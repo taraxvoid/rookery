@@ -55,10 +55,11 @@ jobs:
           EXTRA_LABELS: ${{ inputs.extra-labels }}
         run: |
           set -euo pipefail
+          set -f # no glob expansion of the space-separated paths
           extras=()
           for path in $EXTRA_LABELS; do
             case "$path" in
-              /* | *..*) echo "::error::extra-labels: $path must be a relative path inside the repo"; exit 1 ;;
+              /* | ../* | */../* | */.. | ..) echo "::error::extra-labels: $path must be a relative path inside the repo"; exit 1 ;;
             esac
             extras+=("caller/$path")
           done
