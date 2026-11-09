@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
-"""Apply .github/labels.yml to this repo's GitHub labels with `gh`.
+"""Apply rookery's .github/labels.yml (plus any extra files) to a repo's labels.
 
 Stdlib only: labels.yml is a flat list of {name, color, description}, simple
 enough to parse without a YAML library or a third-party label-sync action.
-Labels missing from the file are left alone. A label with `was:` is renamed
+Labels missing from the files are left alone. A label with `was:` is renamed
 from its old name when the old one exists and the new one doesn't, so issues
 and PRs keep it.
 
-    python3 sync_labels.py            # apply (needs GH_TOKEN and GH_REPO)
-    python3 sync_labels.py --check    # parse and print only
+Extra files add a repo's own labels on top of rookery's. They can't redefine
+a rookery label: a name declared twice across all files is an error, so
+rookery stays the source of truth for the shared set.
+
+    python3 sync_labels.py                     # apply (needs GH_TOKEN and GH_REPO)
+    python3 sync_labels.py --check             # parse and print only
+    python3 sync_labels.py extra.yml [...]     # rookery's labels plus extra.yml
 """
 
 import json
@@ -52,17 +57,33 @@ def existing_labels() -> set[str]:
     return {label["name"] for label in json.loads(result.stdout)}
 
 
+def load(paths: list[Path]) -> tuple[list[dict[str, str]], list[str]]:
+    """Every label across paths, and the problems found while reading them."""
+    labels, problems = [], []
+    for path in paths:
+        try:
+            text = path.read_text()
+        except OSError as e:
+            problems.append(f"{path}: {e.strerror}")
+            continue
+        parsed = parse_labels(text)
+        declared = len(re.findall(r"^-\s*name:", text, flags=re.MULTILINE))
+        if not parsed or len(parsed) != declared:
+            problems.append(f"{path}: parsed {len(parsed)} of {declared} labels; check the format")
+        labels += parsed
+    return labels, problems
+
+
 def main(argv: list[str]) -> int:
-    text = LABELS_FILE.read_text()
-    labels = parse_labels(text)
-    declared = len(re.findall(r"^-\s*name:", text, flags=re.MULTILINE))
-    if not labels or len(labels) != declared:
-        print(f"{LABELS_FILE}: parsed {len(labels)} of {declared} labels; check the format", file=sys.stderr)
+    paths = [LABELS_FILE, *(Path(a) for a in argv if not a.startswith("--"))]
+    labels, problems = load(paths)
+    if problems:
+        print(*problems, sep="\n", file=sys.stderr)
         return 1
 
     errors = name_errors(labels)
     if errors:
-        print(f"{LABELS_FILE}:", *errors, sep="\n  - ", file=sys.stderr)
+        print(", ".join(map(str, paths)) + ":", *errors, sep="\n  - ", file=sys.stderr)
         return 1
 
     if "--check" in argv:

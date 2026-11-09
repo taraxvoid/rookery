@@ -1,0 +1,65 @@
+name: Sync labels (reusable)
+
+# Applies rookery's .github/labels.yml, at the ref the caller pinned, to the
+# calling repo, plus any of the caller's own label files. See CONVENTIONS.md
+# for the caller workflow. Callers should run it from main only, never on
+# pull_request: labels are shared repo state that an unmerged PR shouldn't be
+# able to change.
+on:
+  workflow_call:
+    inputs:
+      extra-labels:
+        description: >
+          Space-separated paths, in the calling repo, to label files in the
+          same format as rookery's labels.yml. Their labels are added on top of
+          rookery's; redefining a rookery label is an error.
+        type: string
+        default: ""
+
+permissions: {}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      # rookery at the commit the caller pinned (`uses: ...@<sha>`), so the
+      # labels applied are the ones at that ref, not whatever main has today.
+      # job.workflow_* name this workflow's own source; github.* would name
+      # the caller's.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
+          path: rookery
+          sparse-checkout: |
+            .github/labels.yml
+            sync_labels.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - if: inputs.extra-labels != ''
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: caller
+          sparse-checkout: ${{ inputs.extra-labels }}
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Apply labels
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          EXTRA_LABELS: ${{ inputs.extra-labels }}
+        run: |
+          set -euo pipefail
+          extras=()
+          for path in $EXTRA_LABELS; do
+            case "$path" in
+              /* | *..*) echo "::error::extra-labels: $path must be a relative path inside the repo"; exit 1 ;;
+            esac
+            extras+=("caller/$path")
+          done
+          python3 rookery/sync_labels.py "${extras[@]}"

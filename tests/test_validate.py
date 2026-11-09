@@ -75,6 +75,31 @@ class LabelsFile(unittest.TestCase):
         self.assertEqual(sync_labels.main(["--check"]), 0)
 
 
+class ExtraLabels(unittest.TestCase):
+    def setUp(self):
+        spec = importlib.util.spec_from_file_location("sync_labels", validate.ROOT / "sync_labels.py")
+        self.sync_labels = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(self.sync_labels)
+
+    def check(self, text: str) -> int:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "extra.yml"
+            path.write_text(text)
+            return self.sync_labels.main(["--check", str(path)])
+
+    def test_extra_label_is_added(self):
+        self.assertEqual(self.check('- name: "my-own"\n  color: "FFFFFF"\n  description: "Mine."\n'), 0)
+
+    def test_redefining_a_rookery_label_fails(self):
+        self.assertEqual(self.check('- name: "needs-you"\n  color: "FFFFFF"\n  description: "Mine."\n'), 1)
+
+    def test_malformed_extra_file_fails(self):
+        self.assertEqual(self.check('- name: "oops"\n'), 1)
+
+    def test_missing_extra_file_fails(self):
+        self.assertEqual(self.sync_labels.main(["--check", "/nonexistent/extra.yml"]), 1)
+
+
 class ReadonlyBash(unittest.TestCase):
     def test_scoped_bash_counts_as_bash(self):
         self.assertTrue(validate.has_any_bash("Read, Bash(gitleaks*)"))
