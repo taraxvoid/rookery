@@ -71,6 +71,13 @@ def load(paths: list[Path]) -> tuple[list[dict[str, str]], list[str]]:
         declared = len(re.findall(r"^-\s", text, flags=re.MULTILINE))
         if not parsed or len(parsed) != declared:
             problems.append(f"{path}: parsed {len(parsed)} of {declared} labels; check the format")
+        # Every key line must have been consumed by an entry. Catches an unknown
+        # key, or `was` placed after `description`, which would otherwise be
+        # ignored and create the new label instead of renaming the old one.
+        keys = len(re.findall(r"^(?:-\s+|\s+)[A-Za-z_]+:", text, flags=re.MULTILINE))
+        consumed = sum(3 + bool(label.get("was")) for label in parsed)
+        if keys != consumed:
+            problems.append(f"{path}: {keys} fields but {consumed} recognised; order is name, was, color, description")
         labels += parsed
     return labels, problems
 

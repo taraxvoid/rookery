@@ -100,6 +100,18 @@ class ExtraLabels(unittest.TestCase):
         good = '- name: "my-own"\n  color: "FFFFFF"\n  description: "Mine."\n'
         self.assertEqual(self.check(good + '- color: "FFFFFF"\n  description: "No name."\n'), 1)
 
+    def test_was_after_description_fails(self):
+        text = '- name: "new-label"\n  color: "FFFFFF"\n  description: "Example"\n  was: "old-label"\n'
+        self.assertEqual(self.check(text), 1)
+
+    def test_unknown_field_fails(self):
+        text = '- name: "new-label"\n  color: "FFFFFF"\n  description: "Example"\n  extra: "x"\n'
+        self.assertEqual(self.check(text), 1)
+
+    def test_was_in_order_passes(self):
+        text = '- name: "new-label"\n  was: "old-label"\n  color: "FFFFFF"\n  description: "Example"\n'
+        self.assertEqual(self.check(text), 0)
+
     def test_unknown_option_fails(self):
         self.assertEqual(self.sync_labels.main(["--chek"]), 2)
 
