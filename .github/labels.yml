@@ -1,6 +1,8 @@
 # Labels for agent work. CONVENTIONS.md says what each one means.
-# Applied by .github/workflows/sync-labels.yml on every change to main.
-# Labels not listed here (GitHub's defaults, Renovate's) are left alone.
+# Applied to this repo by .github/workflows/sync-labels.yml on every change to
+# main, and to other repos by the reusable sync-labels-reusable.yml (see
+# CONVENTIONS.md). Labels not listed here (GitHub's defaults, Renovate's, a
+# repo's own extras) are left alone.
 #
 # Names are lowercase words joined by hyphens: readable, and never needing
 # quotes in a shell command or a permission pattern such as
@@ -37,6 +39,10 @@
   was: "agent:ready-to-merge"
   color: "5319E7"
   description: "Reviewed, gates pass."
+
+- name: "low-risk"
+  color: "0E8A16"
+  description: "Judged low risk by a reviewer; merges once required checks pass."
 
 - name: "agent-authored"
   color: "C5DEF5"

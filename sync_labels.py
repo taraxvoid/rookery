@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
-"""Apply .github/labels.yml to this repo's GitHub labels with `gh`.
+"""Apply rookery's .github/labels.yml (plus any extra files) to a repo's labels.
 
 Stdlib only: labels.yml is a flat list of {name, color, description}, simple
 enough to parse without a YAML library or a third-party label-sync action.
-Labels missing from the file are left alone. A label with `was:` is renamed
+Labels missing from the files are left alone. A label with `was:` is renamed
 from its old name when the old one exists and the new one doesn't, so issues
 and PRs keep it.
 
-    python3 sync_labels.py            # apply (needs GH_TOKEN and GH_REPO)
-    python3 sync_labels.py --check    # parse and print only
+Extra files add a repo's own labels on top of rookery's. They can't redefine
+a rookery label: a name declared twice across all files is an error, so
+rookery stays the source of truth for the shared set.
+
+    python3 sync_labels.py                     # apply (needs GH_TOKEN and GH_REPO)
+    python3 sync_labels.py --check             # parse and print only
+    python3 sync_labels.py extra.yml [...]     # rookery's labels plus extra.yml
 """
 
 import json
@@ -36,6 +41,7 @@ def parse_labels(text: str) -> list[dict[str, str]]:
 
 
 def name_errors(labels: list[dict[str, str]]) -> list[str]:
+    """Problems with label names: bad format, duplicates, or a name that is also a `was`."""
     errors = [f"{l['name']!r}: use lowercase words joined by hyphens" for l in labels if not _NAME.match(l["name"])]
     names = [l["name"] for l in labels]
     errors += [f"{n!r}: declared twice" for n in sorted({n for n in names if names.count(n) > 1})]
@@ -52,17 +58,45 @@ def existing_labels() -> set[str]:
     return {label["name"] for label in json.loads(result.stdout)}
 
 
+def load(paths: list[Path]) -> tuple[list[dict[str, str]], list[str]]:
+    """Every label across paths, and the problems found while reading them."""
+    labels, problems = [], []
+    for path in paths:
+        try:
+            text = path.read_text()
+        except OSError as e:
+            problems.append(f"{path}: {e.strerror}")
+            continue
+        parsed = parse_labels(text)
+        declared = len(re.findall(r"^-\s", text, flags=re.MULTILINE))
+        if not parsed or len(parsed) != declared:
+            problems.append(f"{path}: parsed {len(parsed)} of {declared} labels; check the format")
+        # Every key line must have been consumed by an entry. Catches an unknown
+        # key, or `was` placed after `description`, which would otherwise be
+        # ignored and create the new label instead of renaming the old one.
+        keys = len(re.findall(r"^(?:-\s+|\s+)[A-Za-z_]+:", text, flags=re.MULTILINE))
+        consumed = sum(3 + bool(label.get("was")) for label in parsed)
+        if keys != consumed:
+            problems.append(f"{path}: {keys} fields but {consumed} recognised; order is name, was, color, description")
+        labels += parsed
+    return labels, problems
+
+
 def main(argv: list[str]) -> int:
-    text = LABELS_FILE.read_text()
-    labels = parse_labels(text)
-    declared = len(re.findall(r"^-\s*name:", text, flags=re.MULTILINE))
-    if not labels or len(labels) != declared:
-        print(f"{LABELS_FILE}: parsed {len(labels)} of {declared} labels; check the format", file=sys.stderr)
+    """Sync (or with --check, print) rookery's labels plus any extra files in argv."""
+    unknown = [a for a in argv if a.startswith("--") and a != "--check"]
+    if unknown:
+        print(f"unknown option: {' '.join(unknown)}", file=sys.stderr)
+        return 2
+    paths = [LABELS_FILE, *(Path(a) for a in argv if not a.startswith("--"))]
+    labels, problems = load(paths)
+    if problems:
+        print(*problems, sep="\n", file=sys.stderr)
         return 1
 
     errors = name_errors(labels)
     if errors:
-        print(f"{LABELS_FILE}:", *errors, sep="\n  - ", file=sys.stderr)
+        print(", ".join(map(str, paths)) + ":", *errors, sep="\n  - ", file=sys.stderr)
         return 1
 
     if "--check" in argv:

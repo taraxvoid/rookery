@@ -141,7 +141,9 @@ without `ready-for-agent`, a claim comment plus `agent-working` stops two tools
 taking the same issue, and agent branches are `agent/<bird>/<issue>-<slug>`.
 [CONVENTIONS.md](CONVENTIONS.md) has the full label set, the bar an issue must
 clear to be `ready-for-agent`, and how agents escalate. Labels live in
-[`.github/labels.yml`](.github/labels.yml) and sync on merge.
+[`.github/labels.yml`](.github/labels.yml) and sync on merge. Other repos call
+the reusable `sync-labels-reusable.yml` pinned by SHA instead of copying the
+files (see CONVENTIONS.md).
 
 ### Dispatch workflow
 

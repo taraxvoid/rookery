@@ -1,12 +1,14 @@
 name: Sync labels
 
 # main only, never on pull_request: labels are shared repo state that an
-# unmerged PR shouldn't be able to change.
+# unmerged PR shouldn't be able to change. Calls the reusable workflow in this
+# repo, the same one other repos call pinned by SHA.
 on:
   push:
     branches: [main]
     paths:
       - .github/labels.yml
+      - .github/workflows/sync-labels-reusable.yml
       - sync_labels.py
   workflow_dispatch:
 
@@ -14,17 +16,7 @@ permissions: {}
 
 jobs:
   sync:
-    runs-on: ubuntu-latest
     permissions:
       contents: read
       issues: write
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Apply .github/labels.yml
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-        run: python3 sync_labels.py
+    uses: $/.github/workflows/sync-labels-reusable.yml
