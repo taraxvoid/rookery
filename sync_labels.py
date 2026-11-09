@@ -39,7 +39,7 @@ def name_errors(labels: list[dict[str, str]]) -> list[str]:
     errors = [f"{l['name']!r}: use lowercase words joined by hyphens" for l in labels if not _NAME.match(l["name"])]
     # Old names predate the hyphen rule (e.g. "agent:ready"), but `was` is a
     # positional arg to `gh label edit`, so it must not parse as a flag.
-    errors += [f"{l['was']!r}: previous name must not start with '-'" for l in labels if l.get("was", "").startswith("-")]
+    errors += [f"{l['was']!r}: previous name must not start with '-'" for l in labels if (l.get("was") or "").startswith("-")]
     names = [l["name"] for l in labels]
     errors += [f"{n!r}: declared twice" for n in sorted({n for n in names if names.count(n) > 1})]
     olds = {l["was"] for l in labels if l.get("was")}
