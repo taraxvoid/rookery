@@ -19,4 +19,4 @@ jobs:
     permissions:
       contents: read
       issues: write
-    uses: ./.github/workflows/sync-labels-reusable.yml
+    uses: $/.github/workflows/sync-labels-reusable.yml
