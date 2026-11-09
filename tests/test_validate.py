@@ -96,6 +96,10 @@ class ExtraLabels(unittest.TestCase):
     def test_malformed_extra_file_fails(self):
         self.assertEqual(self.check('- name: "oops"\n'), 1)
 
+    def test_item_without_name_fails(self):
+        good = '- name: "my-own"\n  color: "FFFFFF"\n  description: "Mine."\n'
+        self.assertEqual(self.check(good + '- color: "FFFFFF"\n  description: "No name."\n'), 1)
+
     def test_unknown_option_fails(self):
         self.assertEqual(self.sync_labels.main(["--chek"]), 2)
 

@@ -57,6 +57,23 @@ jobs:
         with:
           persist-credentials: false
 
+      # jactionlint, not actionlint: actionlint is unmaintained and flags newer
+      # contexts such as job.workflow_sha. Pinned release, attestation-verified.
+      # --profile correctness is actionlint's checks only; the default profile
+      # adds style rules (timeouts, concurrency) this repo hasn't adopted.
+      - name: jactionlint
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: 2.3.0 # renovate: datasource=github-releases depName=jdx/jactionlint
+        run: |
+          set -euo pipefail
+          tarball="jactionlint_${VERSION}_linux_amd64.tar.gz"
+          gh release download --repo jdx/jactionlint --pattern "$tarball" "v$VERSION" --dir "$RUNNER_TEMP"
+          gh attestation verify -R jdx/jactionlint "$RUNNER_TEMP/$tarball"
+          tar xf "$RUNNER_TEMP/$tarball" -C "$RUNNER_TEMP" jactionlint
+          "$RUNNER_TEMP/jactionlint" --color --profile correctness
+
       - name: zizmor
         uses: zizmorcore/zizmor-action@53290badfa369cb0bf7ad16342cb62c2fa47ac7b # v0.8.0
         with:

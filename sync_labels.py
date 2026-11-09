@@ -68,7 +68,7 @@ def load(paths: list[Path]) -> tuple[list[dict[str, str]], list[str]]:
             problems.append(f"{path}: {e.strerror}")
             continue
         parsed = parse_labels(text)
-        declared = len(re.findall(r"^-\s*name:", text, flags=re.MULTILINE))
+        declared = len(re.findall(r"^-\s", text, flags=re.MULTILINE))
         if not parsed or len(parsed) != declared:
             problems.append(f"{path}: parsed {len(parsed)} of {declared} labels; check the format")
         labels += parsed
