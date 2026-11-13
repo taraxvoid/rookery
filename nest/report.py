@@ -159,7 +159,7 @@ def cmd_publish(dry_run: bool) -> None:
         },
     )
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
+        with urllib.request.urlopen(req, timeout=30) as resp:  # nosec B310: PUBLISH_URL is a fixed https constant
             print(f"published ({resp.status})")
     except urllib.error.HTTPError as e:
         sys.exit(f"publish: HTTP {e.code} {e.read().decode(errors='replace')[:200]}")
