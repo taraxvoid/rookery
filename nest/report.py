@@ -108,13 +108,24 @@ def signature(secret: str, timestamp: str, body: str) -> str:
     return f"sha256={mac.hexdigest()}"
 
 
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    # The default handler would resend the Authorization header to wherever
+    # Location points, http included. Mercury has no reason to redirect, so a
+    # 3xx surfaces as an HTTPError instead.
+    def redirect_request(self, *args, **kwargs):
+        return None
+
+
+_MERCURY_OPENER = urllib.request.build_opener(_NoRedirect)
+
+
 def mercury(path: str, token: str) -> dict:
     url = MERCURY_API + path
     parsed = urllib.parse.urlsplit(url)
     if parsed.scheme != "https" or not parsed.netloc:  # the bearer token must not go out in cleartext
         sys.exit(f"MERCURY_API_BASE must be an https URL, got {MERCURY_API!r}")
     req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
-    with urllib.request.urlopen(req, timeout=30) as resp:  # nosec B310: scheme checked above
+    with _MERCURY_OPENER.open(req, timeout=30) as resp:  # nosec B310: https checked above, redirects refused
         return json.loads(resp.read())
 
 

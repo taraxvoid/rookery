@@ -87,6 +87,13 @@ class CardSummary(unittest.TestCase):
         self.assertNotIn("card-taxi", calls[1])
 
 
+class MercuryRedirects(unittest.TestCase):
+    def test_redirects_are_refused(self):
+        # None tells urllib not to follow, so the token never reaches a Location target.
+        handler = report._NoRedirect()
+        self.assertIsNone(handler.redirect_request(None, None, 302, "Found", {}, "http://evil.example/"))
+
+
 class Summary(unittest.TestCase):
     def summary(self, cards):
         return report.build_summary(cards, datetime(2026, 10, 6, 12, 0, tzinfo=UTC))
