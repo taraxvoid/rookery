@@ -92,7 +92,7 @@ lower-tier data and is reviewed before anything runs unattended.
 | Restriction | Where it's enforced |
 |---|---|
 | Tier-0 birds can't edit, run shell, dispatch or write anywhere | Each persona's Claude Code `tools:` line (no `Bash`, `Edit`, `Write`, `NotebookEdit` or `Task`), held there by `validate.py`. Unattended runs move to gh-aw: a read-only token, writes only through safe outputs ([0002](docs/decisions/0002-claude-copilot-gh-aw.md)) |
-| Scanners for a tier-0 bird (canary's `gitleaks`, `grype`) | They run in CI or a workflow step, never as the bird; the bird reads their output |
+| Scanners for a tier-0 bird (canary's `gitleaks`, `grype`) | They run in CI or a workflow step, never as the bird. Today only `gitleaks` runs (in `nest-validate.yml`); canary reading scanner output waits on its gh-aw workflow ([0002](docs/decisions/0002-claude-copilot-gh-aw.md)) |
 | Agents only run safe git commands | [`nest/claude/settings.json`](nest/claude/settings.json): an allowlist of git and `gh` commands plus deny rules for history rewrites, force pushes, pushes to `main`, hook bypasses and config changes. Run headless with `--permission-mode dontAsk` and anything off the list is refused |
 | Model choice and spend per tier | Claude subagent `model:` per persona; gh-aw `engine.model` and `max-ai-credits` per workflow; vendor limits, see [Spend](#spend) |
 | Persona prose and enforcement agree | [`validate.py`](validate.py), run in CI |
@@ -116,9 +116,21 @@ merchant-locked, spend-capped virtual card per vendor.
 
 `nest/report.py publish` pushes an amount-free containment summary (card
 containment flags today; per-persona usage once taraxvoid/rookery#10 lands) to a
-[voidlight](https://github.com/taraxvoid/voidlight) status endpoint. It never
-sends amounts, balances or card details; `--dry-run` prints exactly what would
-leave the machine.
+[voidlight](https://github.com/taraxvoid/voidlight) status endpoint. The card
+counts cover only the merchants in its `CARD_MERCHANTS` list (OpenRouter and
+Cloudflare today), so a card for any other vendor isn't in them. It never sends
+amounts, balances or card details. `--dry-run` prints exactly what would go to
+voidlight; with a Mercury token it still calls Mercury to build that summary.
+
+Leaving OpenRouter: revoke the `rookery-tier0` and `rookery-tier1` keys and the
+management key in the OpenRouter dashboard, cancel the OpenRouter card, and
+drop the old keychain entries:
+
+```sh
+uvx keyring del rookery-openrouter management
+uvx keyring del rookery-openrouter OPENROUTER_API_KEY_TIER0
+uvx keyring del rookery-openrouter OPENROUTER_API_KEY_TIER1
+```
 
 ```sh
 uv run nest/report.py publish --dry-run

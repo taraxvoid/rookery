@@ -14,7 +14,9 @@ import unittest
 from datetime import UTC, datetime
 from pathlib import Path
 
-sys.modules.setdefault("keyring", types.SimpleNamespace(get_password=lambda *a: None, set_password=lambda *a: None))
+_errors = types.SimpleNamespace(KeyringError=Exception)
+sys.modules.setdefault("keyring", types.SimpleNamespace(get_password=lambda *a: None, set_password=lambda *a: None, errors=_errors))
+sys.modules.setdefault("keyring.errors", _errors)
 _spec = importlib.util.spec_from_file_location("report", Path(__file__).parent.parent / "nest" / "report.py")
 report = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(report)
@@ -65,6 +67,24 @@ class CardSummary(unittest.TestCase):
     def test_vendor_card_without_merchant_lock_counts_but_not_as_locked(self):
         s = report.card_summary([card(None, "openrouter-backup")], 0, MERCHANTS)
         self.assertEqual((s["total"], s["merchantLocked"]), (1, 0))
+
+    def test_declines_are_queried_for_every_counted_card(self):
+        # A nickname-only vendor card is counted, so its declines must be too.
+        cards = [card(None, "openrouter-backup"), card(None, "taxi")]
+        calls = []
+
+        def fake_mercury(path, token):
+            calls.append(path)
+            return {"cards": cards} if path.startswith("/cards") else {"transactions": [{}, {}]}
+
+        original, report.mercury = report.mercury, fake_mercury
+        try:
+            s = report.fetch_cards("t", MERCHANTS, report.date(2026, 11, 13))
+        finally:
+            report.mercury = original
+        self.assertEqual(s["declines30d"], 2)
+        self.assertIn("cardId=card-openrouter-backup", calls[1])
+        self.assertNotIn("card-taxi", calls[1])
 
 
 class Summary(unittest.TestCase):

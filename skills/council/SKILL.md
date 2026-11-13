@@ -42,6 +42,11 @@ pilot), so until then these are families to fill, not wired routes:
 If Copilot offers no non-Claude family at a sane price, the fallback is an
 OpenAI key on gh-aw's Codex engine.
 
+**Until a non-Claude route is wired, there is no council.** Don't dispatch
+jackdaw on its Claude placeholder model and call it a review: a crow leaves the
+PR for human review instead of merging, and a raven hands the architecture call
+to the operator.
+
 ## How
 
 1. **Package the question, stripped of authorship.** The diff (or design
