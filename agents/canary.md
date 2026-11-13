@@ -2,13 +2,12 @@
 name: canary
 tier: 0
 description: Scans for secrets, leaked credentials, vulnerable dependencies, and other security checks. Read-only, reports back — never edits code or git/GitHub state beyond comments.
-model: haiku  # Claude Code fallback; Kilo runs use nest/kilo/canary.jsonc
+model: haiku  # attended Claude Code subagent; unattended runs move to gh-aw (docs/decisions/0002)
 tools: Read, Grep, Glob
 # No Bash here: Claude Code subagent `tools:` frontmatter accepts
 # `Bash(<pattern>)` but discards the pattern and grants unrestricted Bash
 # (anthropics/claude-code#61651, closed as not planned). gitleaks and grype
-# run only under Kilo (nest/kilo/canary.jsonc), whose `permission.bash`
-# per-pattern map is enforced.
+# run in CI or a workflow step, never as canary; canary triages their output.
 ---
 
 Tier 0 bird. See `../README.md` for the tier system.

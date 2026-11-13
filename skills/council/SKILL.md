@@ -27,14 +27,20 @@ test can settle on its own. If CI can answer it, ask CI.
 
 ## Council models
 
-Picked from the live `openrouter.ai/api/v1/models` catalog, 2026-10-06 — one
-per family, none of them Claude. Re-check the catalog before reusing.
+One per family, none of them Claude. These used to route through OpenRouter.
+Since [decision 0002](../../docs/decisions/0002-claude-copilot-gh-aw.md),
+jackdaw runs as a gh-aw review workflow on a non-Claude Copilot model
+(`engine.model`). Which families Copilot exposes is still open (0002's Phase 1
+pilot), so until then these are families to fill, not wired routes:
 
-| Slug | Family | ~$/M in/out |
-|---|---|---|
-| `openrouter/openai/gpt-6.1-sol` | OpenAI | 2 / 10 — jackdaw's default |
-| `openrouter/google/gemini-3.1-pro-preview` | Google | 2 / 12 |
-| `openrouter/deepseek/deepseek-v4-pro-0813` | DeepSeek | 0.66 / 1.98 |
+| Family | Role |
+|---|---|
+| OpenAI | jackdaw's default |
+| Google | raven council |
+| DeepSeek, or another non-Claude family on offer | raven council |
+
+If Copilot offers no non-Claude family at a sane price, the fallback is an
+OpenAI key on gh-aw's Codex engine.
 
 ## How
 
@@ -67,5 +73,5 @@ per family, none of them Claude. Re-check the catalog before reusing.
 ## Cost
 
 Every raven council is ~3 extra frontier-model reviews. Keep it to real
-architecture calls, and check the tier-1 key's spend (`nest/spend.py report`)
-before making it routine.
+architecture calls, and check Copilot premium-request usage before making it
+routine.

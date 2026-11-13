@@ -19,11 +19,11 @@ The personas are birds. Each name says what the bird does.
 ```
 agents/   persona definitions (Claude Code subagent format)
 skills/   shared skills personas can invoke
-nest/     enforcement: Kilo configs, Claude Code permissions, spend-as-code
+nest/     enforcement: Claude Code permissions, digest checks, spend report
 roost/    durable lessons that outlive a worktree
 flocks/   per-operator deployments; ravenflight/ is the reference one
 docs/     decisions (ADRs) and plans
-tests/    validator and spend.py tests (stdlib, mock data, no accounts needed)
+tests/    validator, digest and report.py tests (stdlib, mock data, no accounts needed)
 ```
 
 Where this is heading: Claude Code for attended development, Copilot through
@@ -91,10 +91,10 @@ lower-tier data and is reviewed before anything runs unattended.
 
 | Restriction | Where it's enforced |
 |---|---|
-| Tier-0 birds can't edit, run shell, dispatch or write anywhere | `nest/kilo/<bird>.jsonc`: Kilo `permission` map plus its OS sandbox (Seatbelt on macOS, Bubblewrap on Linux), no writable paths, network denied |
-| Scoped shell for a tier-0 bird (canary's `gitleaks`, `grype`) | Kilo's per-pattern `permission.bash` map, default `deny` |
+| Tier-0 birds can't edit, run shell, dispatch or write anywhere | Each persona's Claude Code `tools:` line (no `Bash`, `Edit`, `Write`, `NotebookEdit` or `Task`), held there by `validate.py`. Unattended runs move to gh-aw: a read-only token, writes only through safe outputs ([0002](docs/decisions/0002-claude-copilot-gh-aw.md)) |
+| Scanners for a tier-0 bird (canary's `gitleaks`, `grype`) | They run in CI or a workflow step, never as the bird; the bird reads their output |
 | Agents only run safe git commands | [`nest/claude/settings.json`](nest/claude/settings.json): an allowlist of git and `gh` commands plus deny rules for history rewrites, force pushes, pushes to `main`, hook bypasses and config changes. Run headless with `--permission-mode dontAsk` and anything off the list is refused |
-| Model choice and spend per tier | [`nest/spend.toml`](nest/spend.toml): OpenRouter keys with daily limits, and guardrails whose model allowlists are derived from the Kilo configs |
+| Model choice and spend per tier | Claude subagent `model:` per persona; gh-aw `engine.model` and `max-ai-credits` per workflow; vendor limits, see [Spend](#spend) |
 | Persona prose and enforcement agree | [`validate.py`](validate.py), run in CI |
 | `main` | Branch protection on the target repo, independent of anything here |
 
@@ -103,36 +103,26 @@ accepts `Bash(<pattern>)` but discards the pattern and grants unrestricted Bash
 (reported as anthropics/claude-code#61651, closed as not planned). Syntax that
 parses cleanly is not evidence it's enforced. So no read-only persona carries
 `Bash` in any form in `agents/*.md`, `validate.py` rejects it, and scoped shell
-access lives only where it's enforced: Kilo's `permission.bash`, or Claude
-Code's settings-level permission rules.
+access lives only where it's enforced: Claude Code's settings-level permission
+rules.
 
 ## Spend
 
-OpenRouter keys and guardrails are code, not web-UI state. `nest/spend.toml`
-declares them and `nest/spend.py` reconciles OpenRouter to match. Each key's
-guardrail model allowlist is derived from the `nest/kilo/*.jsonc` configs that
-use it, so a bird can't be pointed at a model its key will refuse: `plan` fails
-first. The outer bound is a merchant-locked, spend-capped virtual card on the
-OpenRouter account.
+Since [decision 0002](docs/decisions/0002-claude-copilot-gh-aw.md) there are
+no OpenRouter keys or guardrails to manage. Limits live with each vendor:
+Copilot's premium-request budget plus gh-aw `max-ai-credits` per run, and an
+Anthropic workspace spend limit for any headless Claude. The outer bound is a
+merchant-locked, spend-capped virtual card per vendor.
+
+`nest/report.py publish` pushes an amount-free containment summary (card
+containment flags today; per-persona usage once taraxvoid/rookery#10 lands) to a
+[voidlight](https://github.com/taraxvoid/voidlight) status endpoint. It never
+sends amounts, balances or card details; `--dry-run` prints exactly what would
+leave the machine.
 
 ```sh
-uvx keyring set rookery-openrouter management  # management key: keychain only, never a file
-uv run nest/spend.py plan                      # diff OpenRouter against spend.toml
-uv run nest/spend.py apply                     # create/patch keys; secrets go to the keychain
-uv run nest/spend.py report                    # per-key spend and credit balance
-uv run nest/spend.py rotate tier1              # replace a leaked or lost key
+uv run nest/report.py publish --dry-run
 ```
-
-`spend.py env` prints the tier keys as fish `set -gx` lines (`--sh` for `export` lines).
-
-The management key can mint unlimited keys and drop every guardrail, so it
-stays in the OS keychain, out of reach of any agent with file access.
-
-`spend.py publish` pushes an amount-free containment summary (each tier's share
-of its limits, whether allowlists are in sync, card containment flags) to a
-[voidlight](https://github.com/taraxvoid/voidlight) status endpoint. It never
-sends amounts, balances, key names or card details; `--dry-run` prints exactly
-what would leave the machine.
 
 ## Working with GitHub
 
@@ -188,7 +178,6 @@ before starting.
 - **Claude Code**: symlink `~/.claude/agents` to `agents/` (user scope, so every
   project sees the personas). Merge `nest/claude/settings.json` into the target
   repo's `.claude/settings.json` or pass it with `--settings`.
-- **Kilo**: point a run at `nest/kilo/<bird>.jsonc`; see [`nest/kilo/README.md`](nest/kilo/README.md).
 - **Checks**: `python3 validate.py` and `python3 -m unittest discover -s tests`.
   Both are stdlib only.
 

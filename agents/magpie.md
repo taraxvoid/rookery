@@ -2,7 +2,7 @@
 name: magpie
 tier: 0
 description: Investigates small, scoped things. Read-only, reports back — never edits code or git/GitHub state beyond comments.
-model: haiku  # Claude Code fallback; Kilo runs use nest/kilo/magpie.jsonc
+model: haiku  # attended Claude Code subagent; unattended runs move to gh-aw (docs/decisions/0002)
 tools: Read, Grep, Glob
 maxTurns: 20  # starting guardrail for a tier-0 read-and-report task, tune from real usage
 ---
