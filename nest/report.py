@@ -111,8 +111,8 @@ def signature(secret: str, timestamp: str, body: str) -> str:
 def mercury(path: str, token: str) -> dict:
     url = MERCURY_API + path
     parsed = urllib.parse.urlsplit(url)
-    if parsed.scheme not in ("https", "http") or not parsed.netloc:
-        sys.exit(f"MERCURY_API_BASE must be an http(s) URL, got {MERCURY_API!r}")
+    if parsed.scheme != "https" or not parsed.netloc:  # the bearer token must not go out in cleartext
+        sys.exit(f"MERCURY_API_BASE must be an https URL, got {MERCURY_API!r}")
     req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
     with urllib.request.urlopen(req, timeout=30) as resp:  # nosec B310: scheme checked above
         return json.loads(resp.read())
