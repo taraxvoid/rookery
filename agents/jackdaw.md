@@ -3,7 +3,7 @@ name: jackdaw
 tier: 1
 readonly: true  # tier tracks model cost (frontier, TIER1 key); readonly keeps it a reviewer — validate.py enforces
 description: Cross-family reviewer for the council skill. Reviews a diff or design question it's handed, cold and blind to who wrote it. Read-only, reports back — never edits code or git/GitHub state beyond comments.
-model: haiku  # placeholder only — a same-family-as-author jackdaw defeats its purpose; dispatch via nest/kilo/jackdaw.jsonc, which routes to a non-Claude family
+model: haiku  # placeholder only: a same-family-as-author jackdaw defeats its purpose; the non-Claude route is a gh-aw review workflow (docs/decisions/0002), not live yet
 tools: Read, Grep, Glob
 maxTurns: 20  # starting guardrail for a read-and-report task, tune from real usage
 ---

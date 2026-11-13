@@ -6,8 +6,8 @@
 /.github/workflows/ @taraxvoid
 /.github/CODEOWNERS @taraxvoid
 
-# The enforcement boundary: Kilo permission/sandbox blocks, Claude Code
-# permission rules, spend limits, and the validator that holds them together.
+# The enforcement boundary: Claude Code permission rules, the digest gate,
+# the spend report, and the validator that holds them together.
 /nest/ @taraxvoid
 /validate.py @taraxvoid
 

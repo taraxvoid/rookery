@@ -18,8 +18,8 @@ jobs:
         with:
           persist-credentials: false
 
-      # Stdlib only; spend tests use mock OpenRouter and card data.
-      - name: Personas, Kilo configs and safe-git policy
+      # Stdlib only; report tests use mock card data.
+      - name: Personas, flocks and safe-git policy
         run: python3 validate.py
 
       - name: Tests
