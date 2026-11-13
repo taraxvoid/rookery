@@ -1,32 +1,28 @@
 #!/usr/bin/env python3
-"""Validate agents/*.md frontmatter, nest/kilo/*.jsonc configs and the shared
-Claude Code permissions in nest/claude/settings.json.
-No dependencies: parses frontmatter/JSONC by hand.
+"""Validate agents/*.md frontmatter and the shared Claude Code permissions in
+nest/claude/settings.json.
+No dependencies: parses frontmatter by hand.
 
 Checks:
 - required fields present (name, tier, description, model)
 - name matches the filename
 - tier is 0-3
-- read-only personas never carry write/edit/orchestration capability, in
-  either their Claude Code tools: frontmatter or their Kilo permission config.
-  Read-only means tier 0, or any tier with `readonly: true`: tier tracks
+- read-only personas never carry write/edit/orchestration capability in their
+  Claude Code tools: frontmatter, and must set tools: explicitly. Read-only means tier 0, or any tier with `readonly: true`: tier tracks
   model cost, readonly tracks capability (e.g. jackdaw: tier 1, read-only)
 - read-only personas never carry Bash in any form in agents/*.md. Claude Code's
   subagent tools: frontmatter parses `Bash(<pattern>)` but discards the
   parenthetical (anthropics/claude-code#61651, closed as not planned), so a
-  "scoped" entry is unrestricted Bash there. Scoped shell access for a tier-0
-  bird comes only from its nest/kilo/*.jsonc permission.bash map, which Kilo
-  enforces per pattern.
-- every read-only persona has a nest/kilo/<name>.jsonc: its tools: line can't
-  scope Bash, so without a Kilo config nothing enforces its limits beyond
-  Claude Code's coarse tool list
+  "scoped" entry is unrestricted Bash there. A read-only bird that needs a
+  scanner gets its output handed to it (CI, or a gh-aw step) instead.
 - nest/claude/settings.json never allows git or gh wholesale, and keeps the
   deny rules that stop history rewrites, force pushes, pushes to main and
   hook bypasses. Settings-level rules are enforced, and subagents inherit them.
 - every repo-relative file path in a tracked *.md (in backticks or a markdown
   link) resolves to a real file. Stale references survived two manual
   cleanups; re-reading prose doesn't catch them, so it has to be mechanical.
-  docs/plans/ is skipped: a plan names files that don't exist yet.
+  docs/plans/ and docs/decisions/ are skipped: a plan names files that don't
+  exist yet, and an ADR is history.
 - every flocks/<name>/ has a README.md and a flock.toml that matches the
   schema (no unknown keys, repos as owner/name), and at least one flock
   exists.
@@ -40,11 +36,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).parent
 AGENTS_DIR = ROOT / "agents"
-KILO_DIR = ROOT / "nest" / "kilo"
 CLAUDE_SETTINGS = ROOT / "nest" / "claude" / "settings.json"
 FLOCKS_DIR = ROOT / "flocks"
-# Plans name files that don't exist yet, so the link check skips them.
-LINK_CHECK_SKIP = (ROOT / "docs" / "plans",)
+# Plans name files that don't exist yet, and decisions record files that
+# have since gone (nest/kilo/, nest/spend.py), so the link check skips both.
+LINK_CHECK_SKIP = (ROOT / "docs" / "plans", ROOT / "docs" / "decisions")
 # flock.toml schema: key -> (type, required). Unknown keys fail, so a typo
 # can't silently drop a setting.
 FLOCK_KEYS = {"name": (str, True), "operator": (str, True), "repos": (list, True), "runners": (dict, False), "github_app": (dict, False)}
@@ -56,7 +52,6 @@ _REPO_TOP_LEVEL = ("agents/", "nest/", "roost/", "skills/", "tests/", "flocks/",
 _PATH_LIKE = re.compile(r"`([^`\s]+/[^`\s]+)`|\]\(([^)\s]+)\)")
 REQUIRED_FIELDS = ("name", "tier", "description", "model")
 DISALLOWED_FOR_READONLY = ("Edit", "Write", "NotebookEdit", "Task")
-DENY_FOR_READONLY_KILO = ("edit", "task", "agent_manager", "skill", "todowrite", "doom_loop")
 # Allow rules that would hand an agent a whole command family.
 TOO_BROAD_ALLOW = ("Bash", "Bash(*)", "Bash(git *)", "Bash(git*)", "Bash(gh *)", "Bash(gh*)", "Bash(git push *)", "Bash(gh api *)")
 # Deny rules the safe-git policy depends on. Removing one fails CI.
@@ -140,55 +135,13 @@ def check_file(path: Path) -> list[str]:
             if has_any_bash(tools):
                 errors.append(
                     f"{path.name}: read-only persona must not have Bash in agents/*.md tools: "
-                    "(unenforceable there even scoped — see nest/kilo/*.jsonc's permission.bash instead)"
+                    "(unenforceable there even scoped: anthropics/claude-code#61651)"
                 )
             for disallowed in DISALLOWED_FOR_READONLY:
                 if disallowed in tools:
                     errors.append(
                         f"{path.name}: read-only persona must not have '{disallowed}' in tools"
                     )
-
-    return errors
-
-
-def strip_jsonc_comments(text: str) -> str:
-    # Line comments only (// ...) — sufficient for our own hand-authored
-    # configs, which never put "//" inside a string value.
-    return re.sub(r"^\s*//.*$", "", text, flags=re.MULTILINE)
-
-
-def check_kilo_file(path: Path, readonly: bool) -> list[str]:
-    if not readonly:
-        return []
-
-    errors = []
-    try:
-        config = json.loads(strip_jsonc_comments(path.read_text()))
-    except json.JSONDecodeError as e:
-        return [f"kilo/{path.name}: invalid JSON — {e}"]
-
-    permission = config.get("permission", {})
-
-    for key in DENY_FOR_READONLY_KILO:
-        if permission.get(key) != "deny":
-            errors.append(
-                f"kilo/{path.name}: read-only permission.{key} must be 'deny', got {permission.get(key)!r}"
-            )
-
-    bash = permission.get("bash", "allow")
-    bash_default = bash if isinstance(bash, str) else bash.get("*", "allow")
-    if bash_default != "deny":
-        errors.append(
-            f"kilo/{path.name}: read-only permission.bash default (or bare 'bash') must be 'deny', got {bash_default!r}"
-        )
-
-    sandbox = config.get("sandbox", {})
-    if not sandbox.get("enabled"):
-        errors.append(f"kilo/{path.name}: read-only sandbox.enabled must be true")
-    if sandbox.get("writable_paths"):
-        errors.append(
-            f"kilo/{path.name}: read-only sandbox.writable_paths must be empty, got {sandbox.get('writable_paths')!r}"
-        )
 
     return errors
 
@@ -283,28 +236,17 @@ def check_flock(flock_dir: Path) -> list[str]:
 
 def main() -> int:
     all_errors = []
-    readonly_by_name: dict[str, bool] = {}
 
     # A validator that can silently check nothing is worse than none.
-    for required in (AGENTS_DIR, KILO_DIR, CLAUDE_SETTINGS):
+    for required in (AGENTS_DIR, CLAUDE_SETTINGS):
         if not required.exists():
             all_errors.append(f"{required.relative_to(Path(__file__).parent)}: missing")
     agent_paths = sorted(AGENTS_DIR.glob("*.md"))
-    kilo_paths = sorted(KILO_DIR.glob("*.jsonc"))
     if not agent_paths:
         all_errors.append("agents/: no personas found")
 
     for path in agent_paths:
         all_errors.extend(check_file(path))
-        readonly_by_name[path.stem] = is_readonly(parse_frontmatter(path.read_text()))
-
-    for path in kilo_paths:
-        all_errors.extend(check_kilo_file(path, readonly_by_name.get(path.stem, False)))
-
-    kilo_names = {path.stem for path in kilo_paths}
-    for name, readonly in sorted(readonly_by_name.items()):
-        if readonly and name not in kilo_names:
-            all_errors.append(f"{name}.md: read-only persona has no nest/kilo/{name}.jsonc to enforce its limits")
 
     if CLAUDE_SETTINGS.exists():
         all_errors.extend(check_claude_settings(CLAUDE_SETTINGS))
@@ -330,7 +272,6 @@ def main() -> int:
         return 1
 
     print(f"agents: {len(agent_paths)} personas OK")
-    print(f"nest/kilo: {len(kilo_paths)} configs OK")
     print("nest/claude/settings.json: safe-git policy OK")
     print(f"flocks: {len(flock_dirs)} OK ({', '.join(d.name for d in flock_dirs)})")
     print(f"docs: file references in {len(md_paths)} markdown files OK")
