@@ -154,6 +154,14 @@ class LabelNames(unittest.TestCase):
             with self.subTest(name=name):
                 self.assertTrue(self.sync.name_errors([self.label(name)]))
 
+    def test_was_must_not_look_like_a_flag(self):
+        self.assertTrue(self.sync.name_errors([self.label("a", was="--bad")]))
+        self.assertTrue(self.sync.name_errors([self.label("a", was="-x")]))
+
+    def test_legacy_and_missing_was_pass(self):
+        self.assertEqual(self.sync.name_errors([self.label("a", was="agent:a")]), [])
+        self.assertEqual(self.sync.name_errors([self.label("a", was=None)]), [])
+
     def test_duplicates_and_reused_old_names_fail(self):
         self.assertTrue(self.sync.name_errors([self.label("a"), self.label("a")]))
         self.assertTrue(self.sync.name_errors([self.label("a"), self.label("b", was="a")]))
