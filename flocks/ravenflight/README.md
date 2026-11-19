@@ -31,7 +31,6 @@ The flock is moving to [decision 0002](../../docs/decisions/0002-claude-copilot-
 |---|---|---|
 | crow, raven, magpie, shrike, kingfisher | Claude Code, attended, bounded by [`nest/claude/settings.json`](../../nest/claude/settings.json) | live |
 | owl, tern, wren, canary triage, jackdaw | gh-aw + Copilot | planned (0002 Phase 1 and 2) |
-| read-only birds on Kilo | `nest/kilo/` | until 0002 Phase 2 removes it |
 | vixen | none | not live; needs promotion criteria first (taraxvoid/rookery#14) |
 
 vixen's goal state for this flock: wake up to clean repos, stable production, a
