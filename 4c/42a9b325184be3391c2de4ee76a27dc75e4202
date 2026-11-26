@@ -1,0 +1,19 @@
+docs/decisions/0003-provider-neutral-access.md
+  s_2d780168c5cbc8::t_fec03dda32f9d2 1-85
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4c42a9b325184be3391c2de4ee76a27dc75e4202",
+  "prompts": {},
+  "sessions": {
+    "s_2d780168c5cbc8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2dd083a0-2416-482e-aaf8-f497e4212c9f",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "void <1711810+taraxvoid@users.noreply.github.com>"
+    }
+  }
+}
