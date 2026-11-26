@@ -1,0 +1,52 @@
+roost/LEARNED.md
+  s_2d780168c5cbc8::t_68aa2c9d78af8d 49-64
+skills/council/SKILL.md
+  s_2d780168c5cbc8::t_14941ac6c658d2 68
+  s_2d780168c5cbc8::t_4d145874562dae 74-75
+agents/crow.md
+  s_2d780168c5cbc8::t_4528a21bf4fcd2 4
+  s_2d780168c5cbc8::t_9d1fbf7b3a6d61 15-18,38
+tests/test_validate.py
+  s_2d780168c5cbc8::t_623c044c670abe 146-161
+agents/owl.md
+  s_2d780168c5cbc8::t_4528a21bf4fcd2 4,12-23,48
+agents/finch.md
+  s_2d780168c5cbc8::t_77e21f88ea0623 2-35
+flocks/ravenflight/README.md
+  s_2d780168c5cbc8::t_14941ac6c658d2 32-34,36
+validate.py
+  s_2d780168c5cbc8::t_623c044c670abe 26-31,61,153-157
+  s_2d780168c5cbc8::t_57012fee79bf23 158
+agents/magpie.md
+  s_2d780168c5cbc8::t_d44b34e886e344 4,12-32
+README.md
+  s_2d780168c5cbc8::t_95919a36d0753d 205-223
+  s_2d780168c5cbc8::t_14941ac6c658d2 58-70,90,92-95,102,176
+agents/raven.md
+  s_2d780168c5cbc8::t_4528a21bf4fcd2 4
+  s_2d780168c5cbc8::t_9d1fbf7b3a6d61 21-22
+scripts/run-digest.sh
+  s_2d780168c5cbc8::t_3d99b5016c19fe 2,6,18,23
+scripts/persona-usage.py
+  s_2d780168c5cbc8::t_8edf0d5bd68a5a 36
+  s_2d780168c5cbc8::t_fbae6a5edc696e 1-5,8-35,37-43,45-79,81-82,84-93
+  s_2d780168c5cbc8::t_b98be841345671 80,83
+  s_2d780168c5cbc8::t_06c4ba7b1a78da 44
+  s_2d780168c5cbc8::t_3295625e61a2f4 6-7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6fdc6c20aff30d1d9e361375922de124ac27a407",
+  "prompts": {},
+  "sessions": {
+    "s_2d780168c5cbc8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2dd083a0-2416-482e-aaf8-f497e4212c9f",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "void <1711810+taraxvoid@users.noreply.github.com>"
+    }
+  }
+}
