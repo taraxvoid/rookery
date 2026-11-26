@@ -9,8 +9,33 @@ Where something is enforced, this file says so.
 ## Labels
 
 Source of truth: [`.github/labels.yml`](.github/labels.yml), applied to this
-repo by the sync-labels workflow on every change to `main`. Repos that adopt
-rookery copy the file and the workflow.
+repo by the sync-labels workflow on every change to `main`. Other repos don't
+copy the file: they call the reusable
+[`sync-labels-reusable.yml`](.github/workflows/sync-labels-reusable.yml) pinned
+by commit SHA, so the shared labels update only when they bump the pin:
+
+```yaml
+on:
+  push:
+    branches: [main]
+    paths: [.github/labels-extra.yml]
+  workflow_dispatch:
+permissions: {}
+jobs:
+  sync:
+    permissions:
+      contents: read
+      issues: write
+    uses: taraxvoid/rookery/.github/workflows/sync-labels-reusable.yml@<sha>
+    with:
+      extra-labels: .github/labels-extra.yml # optional, the repo's own labels
+```
+
+Extra label files use the same format as `labels.yml`. They add labels; they
+can't redefine one of rookery's (a name declared twice is an error). Run it from
+`main` only, never `pull_request`. Names in the shared set, such as `needs-you`
+and `low-risk`, are stable: other repos depend on them, so a rename is a
+breaking change.
 
 | Label | Meaning | On |
 |---|---|---|
@@ -20,6 +45,7 @@ rookery copy the file and the workflow.
 | `needs-you` | Blocked on a human decision. | Issues, PRs |
 | `in-review` | PR open, awaiting review before merge. | PRs |
 | `ready-to-merge` | Reviewed, gates pass. | PRs |
+| `low-risk` | Judged low risk by a reviewer; merges once required checks pass. | PRs |
 | `agent-authored` | Opened by an agent, whatever credentials it ran under. | Issues, PRs |
 | `from-digest` | Filed by a crow from a tier-0 digest, not by a human. Never auto-promoted to `ready-for-agent`. | Issues |
 
