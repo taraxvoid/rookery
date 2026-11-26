@@ -22,12 +22,13 @@ Claude Code parses the parenthetical and discards it (anthropics/claude-code#616
 later closed as not planned). canary's old `Bash(gitleaks*), Bash(grype*)` was
 full shell access: a live hole in the tier-0 invariant everything else rests
 on. Fix: no read-only persona carries Bash in any form in `agents/*.md`, and
-`validate.py` rejects it. Scoped shell lives in Kilo's `permission.bash` map, or
-in settings-level permission rules (`nest/claude/settings.json`), both enforced.
+`validate.py` rejects it. Scoped shell lives in settings-level permission rules
+(`nest/claude/settings.json`), which are enforced. (Kilo's `permission.bash` map
+was the other enforced option until decision 0002 removed Kilo.)
 **Rule**: never trust a permission syntax without checking that the harness
 enforces it. Parsing cleanly is not evidence of enforcement.
 
-**`validate.py` silently stopped checking the Kilo configs** after a directory
+**`validate.py` silently stopped checking the Kilo configs** (since removed) after a directory
 move: it still pointed at the old path, found zero files, and passed. **Rule**:
 a validator that can silently check nothing is worse than none. It must fail
 when the directory it's about to scan is missing or empty.

@@ -61,10 +61,10 @@ class DocLinks(unittest.TestCase):
         self.assertTrue(self.check("see `nest/README.md` and [x](agents/nope.md)"))
 
     def test_real_reference_passes(self):
-        self.assertEqual(self.check("see `nest/kilo/README.md` and [x](../agents/crow.md)"), [])
+        self.assertEqual(self.check("see `nest/claude/settings.json` and [x](../agents/crow.md)"), [])
 
     def test_placeholders_globs_and_dirs_are_skipped(self):
-        self.assertEqual(self.check("`nest/kilo/<bird>.jsonc`, `agents/*.md`, `roost/`, `skills/council/`"), [])
+        self.assertEqual(self.check("`nest/gh-aw/shared/<bird>.md`, `agents/*.md`, `roost/`, `skills/council/`"), [])
 
 
 class LabelsFile(unittest.TestCase):
@@ -79,6 +79,24 @@ class ReadonlyBash(unittest.TestCase):
     def test_scoped_bash_counts_as_bash(self):
         self.assertTrue(validate.has_any_bash("Read, Bash(gitleaks*)"))
         self.assertFalse(validate.has_any_bash("Read, Grep, Glob"))
+
+
+class ReadonlyPersona(unittest.TestCase):
+    def check(self, frontmatter: str) -> list[str]:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "finch.md"
+            path.write_text(f"---\n{frontmatter}\n---\n\nbody\n")
+            return validate.check_file(path)
+
+    def test_new_readonly_persona_needs_no_runtime_config(self):
+        # Kilo is gone: a tier-0 bird with a tight tools: line stands on its own.
+        self.assertEqual(self.check("name: finch\ntier: 0\ndescription: d\nmodel: haiku\ntools: Read, Grep, Glob"), [])
+
+    def test_readonly_persona_must_set_tools(self):
+        self.assertTrue(self.check("name: finch\ntier: 0\ndescription: d\nmodel: haiku"))
+
+    def test_readonly_persona_rejects_write_tools(self):
+        self.assertTrue(self.check("name: finch\ntier: 0\ndescription: d\nmodel: haiku\ntools: Read, Edit"))
 
 
 if __name__ == "__main__":
