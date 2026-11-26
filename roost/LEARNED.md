@@ -46,3 +46,19 @@ the issue and left for human review before merge.
 - **Rule**: measure before treating a dependency as too big. A ~2.3MB data
   file looked like a Workers bundle-size risk; gzipped, the whole worker was
   ~1MB against a 3MB free-tier limit.
+
+## 2026-11-26: persona consolidation, usage baseline
+
+**Eleven personas, zero runs.** With `~/.claude/agents` unlinked for weeks
+and nobody noticing, local transcripts showed 92 subagent dispatches in 90
+days, all `general-purpose`, none of the birds. Seven tier-0 and tier-3 files
+collapsed to three (magpie, finch, owl); vixen became a goal with no file.
+**Rule**: a persona earns a file when something runs it and its job needs a
+different tool set or model. Check with `scripts/persona-usage.py` before
+adding one.
+
+**User-scope subagents are picked by description.** Once linked, every
+session sees every persona and may delegate to it on its own. crow and raven
+descriptions now start with "Invoke only by name", held by `validate.py`, so
+ordinary implementation work stays in the main session. That steers the
+router; enforcement is still the settings rules and branch protection.

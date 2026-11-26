@@ -29,11 +29,11 @@ The flock is moving to [decision 0002](../../docs/decisions/0002-claude-copilot-
 
 | Personas | Runtime | State |
 |---|---|---|
-| crow, raven, magpie, shrike, kingfisher | Claude Code, attended, bounded by [`nest/claude/settings.json`](../../nest/claude/settings.json) | live |
-| owl, tern, wren, canary triage, jackdaw | gh-aw + Copilot | planned (0002 Phase 1 and 2) |
-| vixen | none | not live; needs promotion criteria first (taraxvoid/rookery#14) |
+| crow, raven, magpie, finch | Claude Code, attended, bounded by [`nest/claude/settings.json`](../../nest/claude/settings.json) | live |
+| owl, finch scanner triage, jackdaw | gh-aw + Copilot | planned (0002 Phase 1 and 2) |
+| tier 3 (no persona) | none | not live; needs promotion criteria first (taraxvoid/rookery#14) |
 
-vixen's goal state for this flock: wake up to clean repos, stable production, a
+The tier-3 goal state for this flock: wake up to clean repos, stable production, a
 proposed staging merge ready to review, new issues filed for work too complex
 for the birds alone, and a digest of what needs the operator's judgment.
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Run a tier-0 digest bird (owl or tern) against a repo, then a crow to triage
+# Run a tier-0 digest bird (owl) against a repo, then a crow to triage
 # what it found: dedupe against existing issues, then file, drop or escalate
 # (agents/crow.md, "Triaging a tier-0 digest").
 #
-# Usage: scripts/run-digest.sh <owl|tern> <target-repo-path> <owner/repo>
+# Usage: scripts/run-digest.sh <owl> <target-repo-path> <owner/repo>
 #
 # The digest comes from logs and analytics anyone can write into, so:
 # - the bird runs in dontAsk mode with read-only tools: nothing it reads can
@@ -15,12 +15,12 @@
 #   can do is produce a labelled issue that a human triages.
 set -euo pipefail
 
-usage="usage: run-digest.sh <owl|tern> <target-repo-path> <owner/repo>"
+usage="usage: run-digest.sh <owl> <target-repo-path> <owner/repo>"
 bird="${1:?$usage}"
 target="${2:?$usage}"
 repo="${3:?$usage}"
 case "$bird" in
-  owl | tern) ;;
+  owl) ;;
   *) echo "not a digest bird: $bird" >&2; exit 2 ;;
 esac
 

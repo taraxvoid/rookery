@@ -55,13 +55,19 @@ files, run arbitrary shell commands or change git or GitHub state.
 
 | Bird | Job |
 |---|---|
-| **shrike** | finds bugs |
-| **magpie** | answers small, scoped questions about a codebase |
-| **wren** | finds dead code, unused imports and small housekeeping |
-| **kingfisher** | takes one log line, stack trace or incident ID and dives for root cause |
-| **canary** | scans for secrets, leaked credentials and vulnerable dependencies |
-| **owl** | digests overnight logs and reports anomalies by morning |
-| **tern** | lightweight, recurring usage and analytics digest |
+| **magpie** | scoped code questions, bug hunts, dead code, and dives from one log line or stack trace to its cause |
+| **finch** | security: secrets, leaked credentials, vulnerable dependencies, and triage of scanner output (gitleaks, grype, SARIF) |
+| **owl** | digests a long window (overnight logs, usage and analytics) into what moved and checked issue candidates |
+
+Three birds, not seven: an earlier set split these jobs across shrike, wren,
+kingfisher, canary and tern. A persona earns a file when something runs it
+and its job needs a different tool set or model, not when its job has a
+different name.
+
+Tier-0 descriptions say "use proactively", so an attended session hands them
+read-only legwork on its own. Write-capable personas (crow, raven) start their
+description with "Invoke only by name", and `validate.py` holds them to it: a
+user-scope subagent with a general description gets handed general work.
 
 ### Tier 1: crows
 
@@ -81,18 +87,19 @@ protected `dev.` preview), promote to staging (`next.`) through the project's
 release flow, and watch both after promoting. Architecture calls go through a
 three-model council first.
 
-### Tier 3: vixen
+### Tier 3: goal, not a persona
 
-The goal tier, not live: CI end to end, business and market signal, and a
-morning digest of what needs a human's judgment. It earns autonomy from real
-lower-tier data and is reviewed before anything runs unattended.
+The goal tier, not live and with no persona file: CI end to end, business and
+market signal, and a morning digest of what needs a human's judgment. It earns
+autonomy from real lower-tier data and is reviewed before anything runs
+unattended (taraxvoid/rookery#14). Until then, tier 3 is the operator.
 
 ## Enforcement
 
 | Restriction | Where it's enforced |
 |---|---|
 | Tier-0 birds can't edit, run shell, dispatch or write anywhere | Each persona's Claude Code `tools:` line (no `Bash`, `Edit`, `Write`, `NotebookEdit` or `Task`), held there by `validate.py`. Unattended runs move to gh-aw: a read-only token, writes only through safe outputs ([0002](docs/decisions/0002-claude-copilot-gh-aw.md)) |
-| Scanners for a tier-0 bird (canary's `gitleaks`, `grype`) | They run in CI or a workflow step, never as the bird. Today only `gitleaks` runs (in `nest-validate.yml`); canary reading scanner output waits on its gh-aw workflow ([0002](docs/decisions/0002-claude-copilot-gh-aw.md)) |
+| Scanners for a tier-0 bird (finch's `gitleaks`, `grype`) | They run in CI or a workflow step, never as the bird. Today only `gitleaks` runs (in `nest-validate.yml`); finch reading scanner output waits on its gh-aw workflow ([0002](docs/decisions/0002-claude-copilot-gh-aw.md)) |
 | Agents only run safe git commands | [`nest/claude/settings.json`](nest/claude/settings.json): an allowlist of git and `gh` commands plus deny rules for history rewrites, force pushes, pushes to `main`, hook bypasses and config changes. Run headless with `--permission-mode dontAsk` and anything off the list is refused |
 | Model choice and spend per tier | Claude subagent `model:` per persona; gh-aw `engine.model` and `max-ai-credits` per workflow; vendor limits, see [Spend](#spend) |
 | Persona prose and enforcement agree | [`validate.py`](validate.py), run in CI |
@@ -166,7 +173,7 @@ that proves the trigger end to end. It's built so issue text can't steer the age
 
 ### Digests
 
-`scripts/run-digest.sh <owl|tern> <repo-path> <owner/repo>` runs a digest bird,
+`scripts/run-digest.sh owl <repo-path> <owner/repo>` runs the digest bird,
 then a crow to triage what it found. Digests read logs and analytics that
 anyone can write into, so the same rule applies as for dispatch:
 
@@ -194,6 +201,25 @@ before starting.
   repo's `.claude/settings.json` or pass it with `--settings`.
 - **Checks**: `python3 validate.py` and `python3 -m unittest discover -s tests`.
   Both are stdlib only.
+
+### Is a persona earning its file?
+
+Linking `agents/` makes the personas available; it doesn't make them useful.
+Three checks, cheapest first:
+
+1. **Does it run?** `python3 scripts/persona-usage.py --days 30` counts
+   subagent dispatches per type from local Claude Code transcripts. A persona
+   with no runs in 30 days of normal work gets merged into another or deleted.
+   The baseline before consolidation: 92 dispatches in 90 days, every one of
+   them `general-purpose`, and none of the eleven birds.
+2. **Does it beat the default?** For magpie and finch, hand the same five
+   real questions to the persona and to a `general-purpose` subagent. Score
+   right/wrong against file:line, and note turns used. Keep the persona only
+   if it's as right and cheaper, or more right.
+3. **Does its model fit?** If magpie on haiku loses step 2, rerun it on
+   sonnet before deleting it: a model change is one frontmatter line.
+
+Record each result as a dated entry in `roost/LEARNED.md`.
 
 Repo-specific behavior belongs in each target repo's own `CLAUDE.md`; this repo
 only holds what's shared across repos.
