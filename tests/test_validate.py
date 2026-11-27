@@ -143,6 +143,22 @@ class ReadonlyPersona(unittest.TestCase):
         self.assertTrue(self.check("name: finch\ntier: 0\ndescription: d\nmodel: haiku\ntools: Read, Edit"))
 
 
+class WriteCapablePersona(unittest.TestCase):
+    def check(self, description: str) -> list[str]:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "rook.md"
+            path.write_text(f"---\nname: rook\ntier: 1\ndescription: {description}\nmodel: sonnet\ntools: Read, Edit, Bash\n---\n")
+            return validate.check_file(path)
+
+    def test_explicit_only_description_passes(self):
+        self.assertEqual(self.check("Invoke only by name. Implements things."), [])
+
+    def test_general_description_fails(self):
+        # A description like this would pull ordinary implementation work
+        # away from the main session.
+        self.assertTrue(self.check("Implementer. Edits code and opens PRs."))
+
+
 if __name__ == "__main__":
     unittest.main()
 

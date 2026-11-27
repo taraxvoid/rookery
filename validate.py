@@ -23,6 +23,12 @@ Checks:
   cleanups; re-reading prose doesn't catch them, so it has to be mechanical.
   docs/plans/ and docs/decisions/ are skipped: a plan names files that don't
   exist yet, and an ADR is history.
+- write-capable personas (not read-only) start their description with
+  "Invoke only by name". With agents/ linked as user-scope subagents, Claude
+  Code picks a subagent from its description, so a description that sounds
+  like general implementation work gets handed general implementation work.
+  This steers the router; it is not enforcement. Enforcement is still
+  nest/claude/settings.json and the target repo's branch protection.
 - every flocks/<name>/ has a README.md and a flock.toml that matches the
   schema (no unknown keys, repos as owner/name), and at least one flock
   exists.
@@ -52,6 +58,7 @@ _REPO_TOP_LEVEL = ("agents/", "nest/", "roost/", "skills/", "tests/", "flocks/",
 _PATH_LIKE = re.compile(r"`([^`\s]+/[^`\s]+)`|\]\(([^)\s]+)\)")
 REQUIRED_FIELDS = ("name", "tier", "description", "model")
 DISALLOWED_FOR_READONLY = ("Edit", "Write", "NotebookEdit", "Task")
+EXPLICIT_ONLY_PREFIX = "Invoke only by name"
 # Allow rules that would hand an agent a whole command family.
 TOO_BROAD_ALLOW = ("Bash", "Bash(*)", "Bash(git *)", "Bash(git*)", "Bash(gh *)", "Bash(gh*)", "Bash(git push *)", "Bash(gh api *)")
 # Deny rules the safe-git policy depends on. Removing one fails CI.
@@ -142,6 +149,12 @@ def check_file(path: Path) -> list[str]:
                     errors.append(
                         f"{path.name}: read-only persona must not have '{disallowed}' in tools"
                     )
+
+    elif not fields.get("description", "").startswith(EXPLICIT_ONLY_PREFIX):
+        errors.append(
+            f"{path.name}: write-capable persona's description must start with "
+            f"{EXPLICIT_ONLY_PREFIX!r} so it isn't auto-delegated (README rule 4)"
+        )
 
     return errors
 

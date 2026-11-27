@@ -65,14 +65,14 @@ to the operator.
    is the finding: record it, don't average it away.
 5. **Record it.** A short "Council" section in the PR description or the
    architecture issue: which models, what each flagged, what you did about it.
-   That's the data a vixen gets trained up on later.
+   That's the data tier 3 gets trained up on later (taraxvoid/rookery#14).
 
 ## Escalation
 
 - crow: jackdaw raises a blocking concern you can't resolve → don't merge;
   escalate to a raven with the review attached.
-- raven: members split on something that's really a business or product call
-  → that's vixen's or the operator's, per `agents/raven.md`. Hand it over with
+- raven: members split on something that's really a business or product call:
+  that's the operator's, per `agents/raven.md`. Hand it over with
   the council record instead of breaking the tie yourself.
 
 ## Cost
